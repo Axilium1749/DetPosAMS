@@ -1,0 +1,1606 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#FAF9F6" />
+  <title>Посещаемость · Детский сад</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #FAF9F6;
+      --bg-soft: #F3EFE8;
+      --bg-elevated: #FFFFFF;
+
+      --ink: #2C2A26;
+      --ink-soft: #6B665E;
+      --ink-faint: #A9A299;
+
+      --peach: #F4D9C2;
+      --peach-strong: #E89B6B;
+      --terracotta: #D9846A;
+      --amber: #E8A857;
+      --emerald: #5BAE7A;
+      --emerald-soft: #D9F0DF;
+      --rose: #E08A8A;
+      --rose-soft: #F8DEDE;
+      --lavender: #C9C4E4;
+
+      --glow-present: rgba(91, 174, 122, 0.45);
+      --glow-absent: rgba(168, 162, 153, 0.35);
+      --glow-amber: rgba(232, 168, 87, 0.45);
+
+      --shadow-sm: 0 2px 10px -3px rgba(60, 50, 40, 0.12);
+      --shadow-md: 0 6px 22px -6px rgba(60, 50, 40, 0.16);
+      --shadow-lg: 0 12px 38px -10px rgba(60, 50, 40, 0.22);
+      --glow-peach: 0 8px 26px -8px rgba(232, 155, 107, 0.55);
+      --glow-emerald: 0 8px 26px -8px rgba(91, 174, 122, 0.5);
+
+      --r-sm: 12px;
+      --r-md: 16px;
+      --r-lg: 20px;
+      --r-xl: 24px;
+      --r-pill: 999px;
+
+      --tap: 48px;
+      --header-h: 64px;
+      --bottom-h: 92px;
+
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --dur: 0.28s;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+        "Roboto", "Helvetica Neue", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      height: 100dvh;
+      line-height: 1.4;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow: hidden;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    #app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(60% 40% at 15% 0%, rgba(244, 217, 194, 0.55), transparent 70%),
+        radial-gradient(50% 35% at 100% 8%, rgba(201, 196, 228, 0.35), transparent 70%);
+      z-index: 0;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(14px);
+      transition: opacity var(--dur) var(--ease), transform var(--dur) var(--spring),
+        visibility 0s linear var(--dur);
+    }
+
+    .screen.is-active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition: opacity var(--dur) var(--ease), transform var(--dur) var(--spring),
+        visibility 0s;
+    }
+
+    .scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: var(--peach-strong) transparent;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .scroll::-webkit-scrollbar-thumb {
+      background: var(--peach-strong);
+      border-radius: var(--r-pill);
+      opacity: 0.5;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: var(--header-h);
+      padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 14px;
+      background: rgba(250, 249, 246, 0.72);
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      border-bottom: 1px solid rgba(60, 50, 40, 0.06);
+    }
+
+    .header__title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header__sub {
+      font-size: 13px;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+
+    .header__back {
+      width: var(--tap);
+      height: var(--tap);
+      display: grid;
+      place-items: center;
+      border: none;
+      background: var(--bg-elevated);
+      border-radius: var(--r-pill);
+      box-shadow: var(--shadow-sm);
+      color: var(--ink);
+      font-size: 20px;
+      cursor: pointer;
+      transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease);
+    }
+
+    .header__back:active {
+      transform: scale(0.92);
+      box-shadow: var(--shadow-md);
+    }
+
+    .header__spacer {
+      flex: 1;
+    }
+
+    .header__greeting {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+    }
+
+    .btn {
+      position: relative;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease),
+        background var(--dur) var(--ease);
+      user-select: none;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn--primary {
+      min-height: var(--tap);
+      padding: 14px 24px;
+      border-radius: var(--r-lg);
+      font-size: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--peach-strong), var(--terracotta));
+      box-shadow: var(--glow-peach);
+    }
+
+    .btn--primary:active {
+      box-shadow: 0 4px 14px -6px rgba(232, 155, 107, 0.7);
+    }
+
+    .btn--block {
+      width: 100%;
+    }
+
+    #login-screen {
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .login__wrap {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .login__logo {
+      width: 96px;
+      height: 96px;
+      border-radius: var(--r-xl);
+      display: grid;
+      place-items: center;
+      font-size: 46px;
+      background: linear-gradient(140deg, var(--peach), var(--lavender));
+      box-shadow: var(--glow-peach), var(--shadow-md);
+      animation: floaty 4s ease-in-out infinite;
+    }
+
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .login__title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .login__subtitle {
+      font-size: 15px;
+      color: var(--ink-soft);
+      max-width: 280px;
+    }
+
+    .field {
+      position: relative;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .field__input {
+      width: 100%;
+      min-height: var(--tap);
+      padding: 18px 16px 8px;
+      border: none;
+      border-radius: var(--r-lg);
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow-sm);
+      font-family: inherit;
+      font-size: 16px;
+      color: var(--ink);
+      outline: none;
+      transition: box-shadow var(--dur) var(--ease);
+    }
+
+    .field__input:focus {
+      box-shadow: 0 0 0 2px var(--peach-strong), var(--glow-peach);
+    }
+
+    .field__label {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-faint);
+      font-size: 15px;
+      pointer-events: none;
+      transition: top var(--dur) var(--spring), font-size var(--dur) var(--ease),
+        color var(--dur) var(--ease);
+    }
+
+    .field__input:focus + .field__label,
+    .field__input:not(:placeholder-shown) + .field__label {
+      top: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--terracotta);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    /* — Точки скрытого ввода пароля в палитре сайта — */
+    .field--password .field__input {
+      /* Нативные точки-маска наследуют цвет текста: красим в терракоту */
+      color: var(--terracotta);
+      letter-spacing: 0.14em;
+    }
+
+    /* — Ошибка неверного пароля — */
+    .field__error {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+      color: var(--rose);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .field--error .field__error {
+      display: flex;
+      animation: errIn 0.3s var(--spring);
+    }
+
+    @keyframes errIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .field--error .field__input {
+      box-shadow: 0 0 0 2px var(--rose), 0 8px 22px -10px rgba(224, 138, 138, 0.7) !important;
+      animation: shake 0.42s var(--ease);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      15% { transform: translateX(-7px); }
+      30% { transform: translateX(6px); }
+      45% { transform: translateX(-5px); }
+      60% { transform: translateX(4px); }
+      75% { transform: translateX(-2px); }
+    }
+
+    .group-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      padding: 18px 18px calc(var(--bottom-h) + env(safe-area-inset-bottom, 0px) + 18px);
+    }
+
+    .group-card {
+      position: relative;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      padding: 18px 16px 16px;
+      border-radius: var(--r-lg);
+      background: var(--bg-elevated);
+      box-shadow:
+        var(--shadow-sm),
+        0 0 0 1px rgba(60, 50, 40, 0.04),
+        0 0 14px -4px var(--glow-tone, rgba(232, 155, 107, 0.35));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 132px;
+      overflow: hidden;
+      font-family: inherit;
+      transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease);
+    }
+
+    .group-card[data-tone="peach"]    { --glow-tone: rgba(232, 155, 107, 0.45); }
+    .group-card[data-tone="amber"]   { --glow-tone: rgba(232, 168, 87, 0.45); }
+    .group-card[data-tone="emerald"] { --glow-tone: rgba(91, 174, 122, 0.45); }
+    .group-card[data-tone="lavender"]{ --glow-tone: rgba(165, 160, 220, 0.5); }
+
+    .group-card::before {
+      content: "";
+      position: absolute;
+      top: -30%;
+      right: -30%;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      opacity: 0.5;
+      filter: blur(10px);
+      transition: opacity var(--dur) var(--ease);
+    }
+
+    .group-card[data-tone="peach"]::before { background: var(--peach); }
+    .group-card[data-tone="amber"]::before { background: var(--amber); }
+    .group-card[data-tone="emerald"]::before { background: var(--emerald-soft); }
+    .group-card[data-tone="lavender"]::before { background: var(--lavender); }
+
+    .group-card:hover {
+      box-shadow:
+        var(--shadow-md),
+        0 0 0 1px rgba(60, 50, 40, 0.06),
+        0 0 22px -2px var(--glow-tone, rgba(232, 155, 107, 0.5));
+    }
+    .group-card:active {
+      transform: scale(0.97);
+      box-shadow:
+        var(--shadow-lg),
+        0 0 0 2px var(--glow-tone, rgba(232, 155, 107, 0.7)),
+        0 0 28px 0px var(--glow-tone, rgba(232, 155, 107, 0.7));
+    }
+    .group-card:active::before { opacity: 0.8; }
+
+    .group-card__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--r-md);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      background: var(--bg-soft);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .group-card__name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      z-index: 1;
+    }
+
+    .group-card__meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      font-weight: 600;
+      z-index: 1;
+    }
+
+    .group-card__badge {
+      margin-left: auto;
+      align-self: flex-start;
+      padding: 4px 10px;
+      border-radius: var(--r-pill);
+      background: var(--bg-soft);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-soft);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .att-controls {
+      position: sticky;
+      top: 0;
+      z-index: 9;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 18px 14px;
+      background: linear-gradient(180deg, rgba(250, 249, 246, 0.92), rgba(250, 249, 246, 0.6));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .att-controls__row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .date-pill {
+      flex: 1;
+      min-height: var(--tap);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      border-radius: var(--r-md);
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow-sm);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .date-pill input[type="date"] {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      width: 100%;
+      padding: 14px 0;
+      outline: none;
+    }
+
+    .search {
+      position: relative;
+      flex: 1;
+    }
+
+    .search__input {
+      width: 100%;
+      min-height: var(--tap);
+      padding: 0 14px 0 42px;
+      border: none;
+      border-radius: var(--r-md);
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow-sm);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      transition: box-shadow var(--dur) var(--ease);
+    }
+
+    .search__input:focus {
+      box-shadow: 0 0 0 2px var(--peach-strong);
+    }
+
+    .search__icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: var(--ink-faint);
+      pointer-events: none;
+    }
+
+    .att-summary {
+      display: flex;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      padding: 0 2px;
+    }
+
+    .att-summary__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: var(--r-pill);
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .att-summary__dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .children {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 6px 18px calc(var(--bottom-h) + env(safe-area-inset-bottom, 0px) + 18px);
+    }
+
+    .child-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--r-lg);
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease);
+    }
+
+    .child-card:active {
+      transform: scale(0.99);
+      box-shadow: var(--shadow-md);
+    }
+
+    .child-card.is-present {
+      box-shadow: var(--shadow-sm), 0 0 0 1px var(--glow-present);
+    }
+
+    .child-card__avatar {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: var(--r-md);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(140deg, var(--peach-strong), var(--amber));
+      box-shadow: var(--shadow-sm);
+    }
+
+    .child-card__info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .child-card__name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .child-card__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+
+    .child-card__status .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ink-faint);
+    }
+
+    .child-card.is-present .child-card__status {
+      color: var(--emerald);
+    }
+
+    .child-card.is-present .child-card__status .dot {
+      background: var(--emerald);
+      box-shadow: 0 0 0 3px var(--glow-present);
+    }
+
+    .toggle {
+      position: relative;
+      flex-shrink: 0;
+      width: 52px;
+      height: 32px;
+      display: inline-block;
+    }
+
+    .toggle__input {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .toggle__track {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-pill);
+      background: var(--bg-soft);
+      box-shadow: inset 0 1px 3px rgba(60, 50, 40, 0.15);
+      transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+
+    .toggle__thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      transition: transform var(--dur) var(--spring), background var(--dur) var(--ease),
+        color var(--dur) var(--ease);
+    }
+
+    .toggle__input:checked + .toggle__track {
+      background: var(--emerald);
+      box-shadow: 0 0 14px 2px var(--glow-present);
+    }
+
+    .toggle__input:checked + .toggle__track + .toggle__thumb {
+      transform: translateX(20px);
+      color: var(--emerald);
+    }
+
+    .check {
+      flex-shrink: 0;
+      position: relative;
+      width: 44px;
+      height: 44px;
+    }
+
+    .check__input {
+      position: absolute;
+      opacity: 0;
+      inset: 0;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .check__box {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-md);
+      background: var(--bg-soft);
+      box-shadow: inset 0 1px 3px rgba(60, 50, 40, 0.12);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      color: transparent;
+      transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+        color var(--dur) var(--ease), transform var(--dur) var(--spring);
+    }
+
+    .check__input:checked + .check__box {
+      background: var(--emerald);
+      color: #fff;
+      box-shadow: 0 0 16px 2px var(--glow-present);
+      transform: scale(1.02);
+    }
+
+    .check__input:active + .check__box {
+      transform: scale(0.92);
+    }
+
+    .bottom-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      padding: 12px 18px calc(env(safe-area-inset-bottom, 0px) + 14px);
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(22px) saturate(1.6);
+      -webkit-backdrop-filter: blur(22px) saturate(1.6);
+      border-top: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 -8px 30px -12px rgba(60, 50, 40, 0.18);
+    }
+
+    .bottom-bar__hint {
+      font-size: 12px;
+      color: var(--ink-soft);
+      text-align: center;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+
+    @media (max-width: 340px) {
+      .group-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+
+    <section id="login-screen" class="screen is-active" aria-label="Вход">
+      <div class="login__wrap">
+        <div class="login__logo" aria-hidden="true">🧸</div>
+        <div>
+          <h1 class="login__title">Посещаемость</h1>
+          <p class="login__subtitle">Учёт посещаемости детского сада. Войдите, чтобы отметить детей.</p>
+        </div>
+
+        <form class="field field--password" autocomplete="off" onsubmit="return false">
+          <input
+            id="login-password"
+            class="field__input"
+            type="password"
+            placeholder=" "
+            inputmode="text"
+            aria-label="Пароль"
+          />
+          <label for="login-password" class="field__label">Пароль</label>
+          <p class="field__error" id="login-error" role="alert"></p>
+        </form>
+
+        <button id="login-enter" class="btn btn--primary btn--block" type="button">
+          Войти →
+        </button>
+      </div>
+    </section>
+
+    <section id="group-screen" class="screen" aria-label="Выбор группы">
+      <header class="header">
+        <button class="header__back" data-back="login-screen" aria-label="Назад">‹</button>
+        <div class="header__greeting">
+          <span class="header__title">Группы</span>
+          <span class="header__sub">Выберите группу для отметки</span>
+        </div>
+      </header>
+
+      <div class="scroll">
+        <div class="group-grid">
+          <button class="group-card" data-tone="peach" data-go="attendance-screen">
+            <span class="group-card__icon" aria-hidden="true">🍼</span>
+            <span class="group-card__name">Младшая группа №1</span>
+            <span class="group-card__meta">
+              <span class="group-card__badge">18 детей</span>
+            </span>
+          </button>
+
+          <button class="group-card" data-tone="amber" data-go="attendance-screen">
+            <span class="group-card__icon" aria-hidden="true">🎨</span>
+            <span class="group-card__name">Средняя группа</span>
+            <span class="group-card__meta">
+              <span class="group-card__badge">22 ребёнка</span>
+            </span>
+          </button>
+
+          <button class="group-card" data-tone="emerald" data-go="attendance-screen">
+            <span class="group-card__icon" aria-hidden="true">📚</span>
+            <span class="group-card__name">Старшая группа</span>
+            <span class="group-card__meta">
+              <span class="group-card__badge">20 детей</span>
+            </span>
+          </button>
+
+          <button class="group-card" data-tone="lavender" data-go="attendance-screen">
+            <span class="group-card__icon" aria-hidden="true">✏️</span>
+            <span class="group-card__name">Подготовительная</span>
+            <span class="group-card__meta">
+              <span class="group-card__badge">19 детей</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="attendance-screen" class="screen" aria-label="Посещаемость">
+      <header class="header">
+        <button class="header__back" data-back="group-screen" aria-label="Назад">‹</button>
+        <div class="header__greeting">
+          <span class="header__title">Средняя группа</span>
+          <span class="header__sub">Отметьте посещаемость</span>
+        </div>
+      </header>
+
+      <div class="scroll">
+        <div class="att-controls">
+          <div class="att-controls__row">
+            <label class="date-pill">
+              <span aria-hidden="true">📅</span>
+              <input type="date" id="att-date" value="2026-08-11" aria-label="Дата" />
+            </label>
+          </div>
+
+          <div class="att-controls__row">
+            <div class="search">
+              <span class="search__icon" aria-hidden="true">🔍</span>
+              <input
+                class="search__input"
+                type="search"
+                placeholder="Поиск по имени…"
+                aria-label="Поиск ребёнка"
+              />
+            </div>
+          </div>
+
+          <div class="att-summary">
+            <span class="att-summary__chip">
+              <span class="att-summary__dot" style="background:var(--emerald)"></span>
+              18 присутствуют
+            </span>
+            <span class="att-summary__chip">
+              <span class="att-summary__dot" style="background:var(--rose)"></span>
+              4 отсутствуют
+            </span>
+          </div>
+        </div>
+
+        <div class="children">
+          <label class="child-card is-present">
+            <span class="child-card__avatar" aria-hidden="true">АС</span>
+            <span class="child-card__info">
+              <span class="child-card__name">Смирнова Анна Петровна</span>
+              <span class="child-card__status"><span class="dot"></span> Присутствует</span>
+            </span>
+            <span class="toggle">
+              <input class="toggle__input" type="checkbox" checked />
+              <span class="toggle__track"></span>
+              <span class="toggle__thumb">✓</span>
+            </span>
+          </label>
+
+          <label class="child-card is-present">
+            <span class="child-card__avatar" aria-hidden="true">ИК</span>
+            <span class="child-card__info">
+              <span class="child-card__name">Иванов Кирилл Андреевич</span>
+              <span class="child-card__status"><span class="dot"></span> Присутствует</span>
+            </span>
+            <span class="toggle">
+              <input class="toggle__input" type="checkbox" checked />
+              <span class="toggle__track"></span>
+              <span class="toggle__thumb">✓</span>
+            </span>
+          </label>
+
+          <label class="child-card">
+            <span class="child-card__avatar" aria-hidden="true">ЕМ</span>
+            <span class="child-card__info">
+              <span class="child-card__name">Егоров Максим Сергеевич</span>
+              <span class="child-card__status"><span class="dot"></span> Отсутствует</span>
+            </span>
+            <span class="toggle">
+              <input class="toggle__input" type="checkbox" />
+              <span class="toggle__track"></span>
+              <span class="toggle__thumb"></span>
+            </span>
+          </label>
+
+          <label class="child-card is-present">
+            <span class="child-card__avatar" aria-hidden="true">КД</span>
+            <span class="child-card__info">
+              <span class="child-card__name">Козлова Дарья Игоревна</span>
+              <span class="child-card__status"><span class="dot"></span> Присутствует</span>
+            </span>
+            <span class="toggle">
+              <input class="toggle__input" type="checkbox" checked />
+              <span class="toggle__track"></span>
+              <span class="toggle__thumb">✓</span>
+            </span>
+          </label>
+
+          <label class="child-card">
+            <span class="child-card__avatar" aria-hidden="true">ПЛ</span>
+            <span class="child-card__info">
+              <span class="child-card__name">Петров Лев Олегович</span>
+              <span class="child-card__status"><span class="dot"></span> Отсутствует</span>
+            </span>
+            <span class="toggle">
+              <input class="toggle__input" type="checkbox" />
+              <span class="toggle__track"></span>
+              <span class="toggle__thumb"></span>
+            </span>
+          </label>
+
+          <label class="child-card is-present">
+            <span class="child-card__avatar" aria-hidden="true">НС</span>
+            <span class="child-card__info">
+              <span class="child-card__name">Новикова София Алексеевна</span>
+              <span class="child-card__status"><span class="dot"></span> Присутствует</span>
+            </span>
+            <span class="toggle">
+              <input class="toggle__input" type="checkbox" checked />
+              <span class="toggle__track"></span>
+              <span class="toggle__thumb">✓</span>
+            </span>
+          </label>
+
+          <label class="child-card is-present">
+            <span class="child-card__avatar" aria-hidden="true">ФА</span>
+            <span class="child-card__info">
+              <span class="child-card__name">Фёдоров Артём Дмитриевич</span>
+              <span class="child-card__status"><span class="dot"></span> Присутствует</span>
+            </span>
+            <span class="toggle">
+              <input class="toggle__input" type="checkbox" checked />
+              <span class="toggle__track"></span>
+              <span class="toggle__thumb">✓</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="bottom-bar">
+        <p class="bottom-bar__hint">18 из 22 отмечены</p>
+        <button id="save-sync" class="btn btn--primary btn--block">
+          Сохранить и синхронизировать ✓
+        </button>
+      </div>
+    </section>
+
+  </div>
+  <script>
+      (function () {
+        "use strict";
+
+        // ==========================================
+        // 1. НАСТРОЙКИ SUPABASE
+        // ==========================================
+        const SUPABASE_URL = 'https://dlhrvqkdcylzdxrphbma.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_2AGKRNlHNkbZ-LWIBTZzrQ_oUn3HChP';
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          realtime: { params: { eventsPerSecond: 10 } },
+        });
+
+        const AUTH_KEY = "kindergarten_auth";
+
+        // ==========================================
+        // 2. СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+        // ==========================================
+        let currentGroupId = null;        // выбранная группа
+        let currentGroupName = "";        // её название (для шапки)
+        let currentChildren = [];          // [{ id, full_name }] — дети текущей группы
+        let attendanceMap = {};           // child_id -> boolean (присутствие для выбранной даты)
+        let currentGroupChildIds = new Set(); // множество child_id текущей группы (фильтр realtime)
+        let realtimeChannel = null;       // активная подписка
+        let isLoadingChildren = false;    // защита от повторных запросов
+
+        // DOM-ссылки
+        const childrenContainer = document.querySelector("#attendance-screen .children");
+        const dateInput = document.getElementById("att-date");
+        const searchInput = document.querySelector(".search__input");
+        const summaryEl = document.querySelector("#attendance-screen .att-summary");
+        const bottomHint = document.querySelector("#attendance-screen .bottom-bar__hint");
+
+        // ==========================================
+        // 3. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+        // ==========================================
+
+        // Инициалы: "Иванов Иван" -> "ИИ", "Смирнова Анна Петровна" -> "СА"
+        function getInitials(fullName) {
+          const parts = (fullName || "").trim().split(/\s+/).filter(Boolean);
+          if (parts.length === 0) return "—";
+          if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+          return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+
+        // Экранирование текста, вставляемого в HTML
+        function esc(value) {
+          return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        // Текущая выбранная дата (YYYY-MM-DD)
+        function getSelectedDate() {
+          return dateInput ? dateInput.value : "";
+        }
+
+        // Тактильная отдача Telegram (если запущено внутри ТГ)
+        function haptic(type, payload) {
+          try {
+            const hf = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback;
+            if (!hf) return;
+            if (type === "impact") hf.impactOccurred(payload || "light");
+            else if (type === "notification") hf.notificationOccurred(payload || "error");
+          } catch (e) {}
+        }
+
+        // ==========================================
+        // 4. УПРАВЛЕНИЕ ЭКРАНАМИ
+        // ==========================================
+        function showScreen(id) {
+          document.querySelectorAll(".screen").forEach(function (s) {
+            s.classList.remove("is-active");
+          });
+          const target = document.getElementById(id);
+          if (target) {
+            target.classList.add("is-active");
+            target.querySelectorAll(".scroll").forEach(function (c) {
+              c.scrollTop = 0;
+            });
+          }
+        }
+
+        document.querySelectorAll("[data-back]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            showScreen(btn.getAttribute("data-back"));
+          });
+        });
+
+        // ==========================================
+        // 5. АВТОРИЗАЦИЯ (RPC verify_app_password)
+        // ==========================================
+        const loginField = document.querySelector(".field--password");
+        const loginInput = document.getElementById("login-password");
+        const loginError = document.getElementById("login-error");
+        const loginBtn = document.getElementById("login-enter");
+        let isLoggingIn = false;
+
+        function clearLoginError() {
+          if (loginField) loginField.classList.remove("field--error");
+          if (loginError) loginError.textContent = "";
+        }
+
+        function showLoginError(message) {
+          if (loginField) loginField.classList.add("field--error");
+          if (loginError) loginError.textContent = message || "Неверный пароль";
+          haptic("notification", "error");
+          if (loginInput) {
+            loginInput.focus();
+            loginInput.select();
+          }
+        }
+
+        function setLoginLoading(loading) {
+          if (!loginBtn) return;
+          loginBtn.disabled = loading;
+          loginBtn.textContent = loading ? "Проверка…" : "Войти →";
+        }
+
+        async function handleLogin() {
+          if (isLoggingIn) return;
+          const password = loginInput ? loginInput.value.trim() : "";
+          if (!password) {
+            showLoginError("Введите пароль");
+            return;
+          }
+
+          isLoggingIn = true;
+          setLoginLoading(true);
+          clearLoginError();
+
+          try {
+            const { data, error } = await db.rpc("verify_app_password", {
+              user_input: password,
+            });
+
+            if (error) throw error;
+
+            // RPC возвращает boolean (приходит как true/false)
+            const ok = data === true || data === "true" || data === "t";
+
+            if (ok) {
+              localStorage.setItem(AUTH_KEY, "true");
+              haptic("impact", "light");
+              showScreen("group-screen");
+              await loadGroups();
+              startRealtime(); // запускаем websocket-подписку после входа
+            } else {
+              showLoginError("Неверный пароль");
+            }
+          } catch (err) {
+            console.error("Ошибка авторизации:", err);
+            showLoginError("Ошибка соединения. Попробуйте ещё раз.");
+          } finally {
+            isLoggingIn = false;
+            setLoginLoading(false);
+          }
+        }
+
+        if (loginBtn) loginBtn.addEventListener("click", handleLogin);
+        if (loginInput) {
+          loginInput.addEventListener("input", clearLoginError);
+          loginInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleLogin();
+            }
+          });
+        }
+
+        // ==========================================
+        // 6. ЗАГРУЗКА ГРУПП
+        // ==========================================
+        async function loadGroups() {
+          const container = document.querySelector(".group-grid");
+          if (!container) return;
+
+          container.innerHTML =
+            '<div style="text-align:center; padding:20px; color:var(--ink-soft); grid-column:1 / -1;">Загрузка групп…</div>';
+
+          try {
+            const { data: groups, error } = await db
+              .from("groups")
+              .select("*")
+              .order("id", { ascending: true });
+
+            if (error) throw error;
+
+            if (!groups || groups.length === 0) {
+              container.innerHTML =
+                '<div style="text-align:center; padding:20px; grid-column:1 / -1; color:var(--ink-soft);">Группы не найдены</div>';
+              return;
+            }
+
+            container.innerHTML = groups
+              .map(function (group) {
+                return (
+                  '<button class="group-card" data-tone="' + esc(group.tone || "peach") +
+                  '" data-id="' + esc(group.id) + '">' +
+                  '<span class="group-card__icon" aria-hidden="true">' + esc(group.icon || "👶") + "</span>" +
+                  '<span class="group-card__name">' + esc(group.name) + "</span>" +
+                  '<span class="group-card__meta"><span class="group-card__badge">Открыть</span></span>' +
+                  "</button>"
+                );
+              })
+              .join("");
+
+            container.querySelectorAll(".group-card").forEach(function (card) {
+              card.addEventListener("click", function () {
+                const groupId = card.getAttribute("data-id");
+                const groupName = card.querySelector(".group-card__name").textContent;
+                openGroupAttendance(groupId, groupName);
+              });
+            });
+          } catch (err) {
+            console.error("Ошибка загрузки групп:", err);
+            container.innerHTML =
+              '<div style="color:var(--rose); text-align:center; grid-column:1 / -1;">Ошибка загрузки данных</div>';
+          }
+        }
+
+        // ==========================================
+        // 7. ОТКРЫТИЕ ГРУППЫ -> ЭКРАН ПОСЕЩАЕМОСТИ
+        // ==========================================
+        function openGroupAttendance(groupId, groupName) {
+          currentGroupId = groupId;
+          currentGroupName = groupName;
+
+          const titleElem = document.querySelector("#attendance-screen .header__title");
+          if (titleElem) titleElem.textContent = groupName;
+
+          // Сбрасываем поиск и дату при входе в группу
+          if (searchInput) searchInput.value = "";
+          if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+
+          showScreen("attendance-screen");
+          loadChildren();
+        }
+
+        // ==========================================
+        // 8. ЗАГРУЗКА ДЕТЕЙ + ПОСЕЩАЕМОСТИ
+        // ==========================================
+        async function loadChildren() {
+          if (!currentGroupId || !childrenContainer) return;
+          if (isLoadingChildren) return;
+          isLoadingChildren = true;
+
+          const selectedDate = getSelectedDate();
+
+          // Состояние загрузки
+          childrenContainer.innerHTML =
+            '<div style="text-align:center; padding:24px; color:var(--ink-soft);">Загрузка детей…</div>';
+          if (summaryEl) summaryEl.style.opacity = "0.5";
+
+          try {
+            // 1) Дети текущей группы
+            const { data: children, error: cErr } = await db
+              .from("children")
+              .select("id, full_name")
+              .eq("group_id", currentGroupId)
+              .order("full_name", { ascending: true });
+
+            if (cErr) throw cErr;
+
+            currentChildren = children || [];
+            currentGroupChildIds = new Set(currentChildren.map((c) => c.id));
+            attendanceMap = {};
+
+            // 2) Посещаемость этих детей на выбранную дату
+            if (currentChildren.length > 0) {
+              const childIds = currentChildren.map((c) => c.id);
+              const { data: att, error: aErr } = await db
+                .from("attendance")
+                .select("child_id, is_present")
+                .eq("date", selectedDate)
+                .in("child_id", childIds);
+
+              if (aErr) throw aErr;
+
+              (att || []).forEach(function (row) {
+                attendanceMap[row.child_id] = !!row.is_present;
+              });
+            }
+
+            renderChildren();
+          } catch (err) {
+            console.error("Ошибка загрузки детей:", err);
+            childrenContainer.innerHTML =
+              '<div style="color:var(--rose); text-align:center; padding:24px;">Не удалось загрузить список</div>';
+            currentChildren = [];
+            currentGroupChildIds = new Set();
+            attendanceMap = {};
+          } finally {
+            isLoadingChildren = false;
+            if (summaryEl) summaryEl.style.opacity = "1";
+          }
+        }
+
+        // ==========================================
+        // 9. РЕНДЕР СПИСКА ДЕТЕЙ (с учётом поиска)
+        // ==========================================
+        function childCardHTML(child, present) {
+          return (
+            '<label class="child-card' + (present ? " is-present" : "") +
+            '" data-child-id="' + esc(child.id) + '" data-name="' + esc(child.full_name) + '">' +
+            '<span class="child-card__avatar" aria-hidden="true">' + esc(getInitials(child.full_name)) + "</span>" +
+            '<span class="child-card__info">' +
+            '<span class="child-card__name">' + esc(child.full_name) + "</span>" +
+            '<span class="child-card__status"><span class="dot"></span> ' +
+            (present ? "Присутствует" : "Отсутствует") + "</span>" +
+            "</span>" +
+            '<span class="toggle">' +
+            '<input class="toggle__input" type="checkbox"' + (present ? " checked" : "") + " />" +
+            '<span class="toggle__track"></span>' +
+            '<span class="toggle__thumb">' + (present ? "✓" : "") + "</span>" +
+            "</span>" +
+            "</label>"
+          );
+        }
+
+        function renderChildren() {
+          if (!childrenContainer) return;
+          const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+
+          if (currentChildren.length === 0) {
+            childrenContainer.innerHTML =
+              '<div style="text-align:center; padding:24px; color:var(--ink-soft);">В группе нет детей</div>';
+            updateSummary();
+            return;
+          }
+
+          const filtered = currentChildren.filter(function (c) {
+            return (c.full_name || "").toLowerCase().includes(query);
+          });
+
+          if (filtered.length === 0) {
+            childrenContainer.innerHTML =
+              '<div style="text-align:center; padding:24px; color:var(--ink-soft);">Ничего не найдено</div>';
+            updateSummary();
+            return;
+          }
+
+          childrenContainer.innerHTML = filtered
+            .map(function (c) {
+              return childCardHTML(c, !!attendanceMap[c.id]);
+            })
+            .join("");
+
+          updateSummary();
+        }
+
+        // ==========================================
+        // 10. СВОДКА ПОСЕЩАЕМОСТИ
+        // ==========================================
+        function updateSummary() {
+          const total = currentChildren.length;
+          let present = 0;
+          currentChildren.forEach(function (c) {
+            if (attendanceMap[c.id]) present++;
+          });
+          const absent = total - present;
+
+          if (summaryEl) {
+            summaryEl.innerHTML =
+              '<span class="att-summary__chip">' +
+              '<span class="att-summary__dot" style="background:var(--emerald)"></span> ' +
+              present + " присутствуют</span>" +
+              '<span class="att-summary__chip">' +
+              '<span class="att-summary__dot" style="background:var(--rose)"></span> ' +
+              absent + " отсутствуют</span>";
+          }
+
+          if (bottomHint) {
+            bottomHint.textContent = present + " из " + total + " отмечены";
+          }
+        }
+
+        // ==========================================
+        // 11. СОХРАНЕНИЕ (UPSERT) ПРИ ПЕРЕКЛЮЧЕНИИ
+        // ==========================================
+        async function saveAttendance(childId, date, isPresent) {
+          const { error } = await db.from("attendance").upsert(
+            {
+              child_id: childId,
+              date: date,
+              is_present: isPresent,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "child_id, date" }
+          );
+          if (error) throw error;
+        }
+
+        // Делегированный обработчик переключения чекбоксов
+        childrenContainer.addEventListener("change", async function (e) {
+          const input = e.target;
+          if (!input.classList.contains("toggle__input")) return;
+
+          const card = input.closest(".child-card");
+          if (!card) return;
+
+          const childId = card.getAttribute("data-child-id");
+          const isPresent = input.checked;
+          const selectedDate = getSelectedDate();
+
+          // Оптимистичное обновление UI + состояния
+          card.classList.toggle("is-present", isPresent);
+          const status = card.querySelector(".child-card__status");
+          if (status) {
+            status.innerHTML = '<span class="dot"></span> ' + (isPresent ? "Присутствует" : "Отсутствует");
+          }
+          const thumb = card.querySelector(".toggle__thumb");
+          if (thumb) thumb.textContent = isPresent ? "✓" : "";
+          attendanceMap[childId] = isPresent;
+          updateSummary();
+
+          haptic("impact", "light");
+
+          // Сохранение в БД
+          input.disabled = true;
+          try {
+            await saveAttendance(childId, selectedDate, isPresent);
+          } catch (err) {
+            console.error("Ошибка сохранения посещаемости:", err);
+            // Откат оптимистичного изменения
+            const reverted = !isPresent;
+            input.checked = reverted;
+            card.classList.toggle("is-present", reverted);
+            if (status) {
+              status.innerHTML = '<span class="dot"></span> ' + (reverted ? "Присутствует" : "Отсутствует");
+            }
+            if (thumb) thumb.textContent = reverted ? "✓" : "";
+            attendanceMap[childId] = reverted;
+            updateSummary();
+            haptic("notification", "error");
+            alert("Не удалось сохранить. Проверьте подключение.");
+          } finally {
+            input.disabled = false;
+          }
+        });
+
+        // ==========================================
+        // 12. ПОИСК И СМЕНА ДАТЫ
+        // ==========================================
+        if (searchInput) {
+          searchInput.addEventListener("input", function () {
+            renderChildren();
+          });
+        }
+
+        if (dateInput) {
+          dateInput.addEventListener("change", function () {
+            // Перечитываем посещаемость для новой даты и перерисовываем список
+            loadChildren();
+          });
+        }
+
+        // Кнопка «Сохранить и синхронизировать» — ручная синхронизация
+        const saveSyncBtn = document.getElementById("save-sync");
+        if (saveSyncBtn) {
+          saveSyncBtn.addEventListener("click", function () {
+            haptic("impact", "light");
+            loadChildren();
+          });
+        }
+
+        // ==========================================
+        // 13. REALTIME (Supabase WebSockets)
+        // ==========================================
+        function startRealtime() {
+          if (realtimeChannel) return; // подписка уже активна
+
+          realtimeChannel = db
+            .channel("attendance-realtime")
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "attendance" },
+              handleRealtimeEvent
+            )
+            .subscribe(function (status) {
+              if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+                console.warn("Realtime-соединение потеряно:", status);
+              }
+            });
+        }
+
+        function handleRealtimeEvent(payload) {
+          try {
+            // Поддерживаем INSERT и UPDATE
+            const row = payload.eventType === "DELETE" ? payload.old : payload.new;
+            if (!row || !row.child_id || !row.date) return;
+
+            const selectedDate = getSelectedDate();
+
+            // Игнорируем изменения вне текущей даты/группы
+            if (row.date !== selectedDate) return;
+            if (!currentGroupChildIds.has(row.child_id)) return;
+
+            const isPresent = !!row.is_present;
+            attendanceMap[row.child_id] = isPresent;
+
+            // Обновляем конкретную карточку без полной перерисовки
+            const card = childrenContainer.querySelector(
+              '.child-card[data-child-id="' + CSS.escape(String(row.child_id)) + '"]'
+            );
+            if (card) {
+              const input = card.querySelector(".toggle__input");
+              if (input && input.checked !== isPresent) {
+                input.checked = isPresent; // программное изменение — событие change не сработает
+              }
+              card.classList.toggle("is-present", isPresent);
+              const status = card.querySelector(".child-card__status");
+              if (status) {
+                status.innerHTML = '<span class="dot"></span> ' + (isPresent ? "Присутствует" : "Отсутствует");
+              }
+              const thumb = card.querySelector(".toggle__thumb");
+              if (thumb) thumb.textContent = isPresent ? "✓" : "";
+            }
+
+            updateSummary();
+            haptic("impact", "light");
+          } catch (err) {
+            console.error("Ошибка обработки realtime-события:", err);
+          }
+        }
+
+        // ==========================================
+        // 14. ИНИЦИАЛИЗАЦИЯ
+        // ==========================================
+        function initApp() {
+          // Инициализация Telegram WebApp
+          if (window.Telegram && window.Telegram.WebApp) {
+            try {
+              const tg = window.Telegram.WebApp;
+              tg.ready();
+              tg.expand();
+            } catch (e) {}
+          }
+
+          // Дату по умолчанию ставим на сегодня
+          if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().slice(0, 10);
+          }
+
+          // Проверяем, авторизован ли пользователь ранее
+          if (localStorage.getItem(AUTH_KEY) === "true") {
+            showScreen("group-screen");
+            loadGroups();
+            startRealtime();
+          } else {
+            showScreen("login-screen");
+          }
+        }
+
+        initApp();
+
+      })();
+  </script>
+</body>
+</html>

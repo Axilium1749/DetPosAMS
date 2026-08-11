@@ -31,6 +31,10 @@
       --rose: #E08A8A;
       --rose-soft: #F8DEDE;
       --lavender: #C9C4E4;
+      --pink: #F3B6CE;
+      --pink-soft: #FBDCE8;
+      --autumn: #C27B4A;
+      --autumn-soft: #E8C9A8;
 
       --glow-present: rgba(91, 174, 122, 0.45);
       --glow-absent: rgba(168, 162, 153, 0.35);
@@ -414,6 +418,8 @@
     .group-card[data-tone="amber"]   { --glow-tone: rgba(232, 168, 87, 0.45); }
     .group-card[data-tone="emerald"] { --glow-tone: rgba(91, 174, 122, 0.45); }
     .group-card[data-tone="lavender"]{ --glow-tone: rgba(165, 160, 220, 0.5); }
+    .group-card[data-tone="pink"]    { --glow-tone: rgba(240, 170, 200, 0.5); }
+    .group-card[data-tone="autumn"] { --glow-tone: rgba(192, 122, 69, 0.5); }
 
     .group-card::before {
       content: "";
@@ -432,6 +438,8 @@
     .group-card[data-tone="amber"]::before { background: var(--amber); }
     .group-card[data-tone="emerald"]::before { background: var(--emerald-soft); }
     .group-card[data-tone="lavender"]::before { background: var(--lavender); }
+    .group-card[data-tone="pink"]::before     { background: var(--pink-soft); }
+    .group-card[data-tone="autumn"]::before   { background: var(--autumn-soft); }
 
     .group-card:hover {
       box-shadow:

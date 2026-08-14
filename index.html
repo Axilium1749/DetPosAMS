@@ -734,7 +734,7 @@
       box-shadow: 0 0 0 3px var(--glow-violet);
     }
 
-    /* — Кнопка отметки. Форма и размер фиксированы в обоих состояниях,
+    /* — Кнопка отметки. Форма и размер фиксированы во всех состояниях,
        меняется только иконка и цвет. — */
     .mark-btn {
       flex-shrink: 0;
@@ -744,10 +744,10 @@
       place-items: center;
       border: 1.5px solid transparent;
       border-radius: var(--r-md);
-      background: linear-gradient(135deg, var(--emerald), #4f9f6e);
+      background: linear-gradient(135deg, var(--peach-strong), var(--terracotta));
       color: #fff;
       cursor: pointer;
-      box-shadow: 0 8px 22px -8px var(--glow-present);
+      box-shadow: var(--glow-peach);
       transition: background var(--dur) var(--ease), color var(--dur) var(--ease),
         box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease),
         transform var(--dur) var(--spring);
@@ -763,13 +763,13 @@
       transform: scale(0.94);
     }
 
-    /* Состояние «отмечен»: голубая, с иконкой часов. Кликабельная —
+    /* Состояние «отмечен»: насыщенно-зелёная, с иконкой часов. Кликабельная —
        открывает редактор времени ухода. Размер и форма те же. */
     .mark-btn.is-marked {
-      background: linear-gradient(135deg, #d6e4f5, #bcd5f0);
-      color: #3576c0;
+      background: linear-gradient(135deg, #4fae6e, #3f9a5d);
+      color: #ffffff;
       border-color: transparent;
-      box-shadow: 0 6px 18px -8px rgba(74, 144, 217, 0.28);
+      box-shadow: 0 6px 18px -8px rgba(63, 154, 93, 0.40);
       cursor: pointer;
     }
 
@@ -777,11 +777,11 @@
       transform: scale(0.94);
     }
 
-    /* Финальная стадия: время ухода заполнено. Светло-зелёная, как у
-       кнопок изначально. Больше не нажимается. */
+    /* Финальная стадия: время ухода заполнено. Неактивная кнопка в стиле
+       кнопки «i» — фон --bg-soft, иконка --ink-soft. Больше не нажимается. */
     .mark-btn.is-done {
-      background: var(--emerald-soft);
-      color: var(--emerald);
+      background: var(--bg-soft);
+      color: var(--ink-soft);
       border-color: transparent;
       box-shadow: var(--shadow-sm);
       cursor: default;
@@ -1196,11 +1196,14 @@
       const loginError = document.getElementById("login-error");
       const loginFieldGroup = loginInput ? loginInput.closest(".field") : null;
 
-      // Иконки кнопки отметки: галочка (неотмечено/готов) и часы (отмечено/в детсаду)
+      // Иконки кнопки отметки:
+      //  плюс (неотмечено — оранжевая), часы (отмечено/в детсаду — зелёная), галочка (готово — светло-зелёная)
       const ICON_CHECK =
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
       const ICON_CLOCK =
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15.5 14"/></svg>';
+      const ICON_PLUS =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
 
       const PRESENT_TEXT = "Присутствует";
       const ABSENT_TEXT = "Отсутствует";
@@ -1503,13 +1506,14 @@
 
           // Определяем CSS-класс и иконку
           let cardClass = "child-card";
-          let iconToUse = ICON_CHECK;
+          let iconToUse = ICON_PLUS;
           let statusText = ABSENT_TEXT;
           let isMarked = false;
           let isDone = false;
 
           if (hasLeft) {
             cardClass += " is-left";
+            iconToUse = ICON_CHECK;
             statusText = `${LEFT_TEXT} ${child.departure_time.slice(0, 5)}`;
             isDone = true;
           } else if (isPresent) {
@@ -1604,7 +1608,7 @@
           btn.classList.toggle("is-marked", present);
           btn.classList.remove("is-done");
           btn.disabled = false;
-          btn.innerHTML = present ? ICON_CLOCK : ICON_CHECK;
+          btn.innerHTML = present ? ICON_CLOCK : ICON_PLUS;
         }
         updateSummary();
       }
@@ -1641,7 +1645,7 @@
         if (btn) {
           btn.classList.remove("is-marked", "is-done");
           btn.disabled = false;
-          btn.innerHTML = ICON_CHECK;
+          btn.innerHTML = ICON_PLUS;
         }
         updateSummary();
       }

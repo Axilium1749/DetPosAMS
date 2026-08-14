@@ -11,7 +11,6 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #FAF9F6;
@@ -36,9 +35,13 @@
       --autumn: #C27B4A;
       --autumn-soft: #E8C9A8;
 
+      --violet: #8A7BD9;
+      --violet-soft: #E4DFF7;
+
       --glow-present: rgba(91, 174, 122, 0.45);
       --glow-absent: rgba(168, 162, 153, 0.35);
       --glow-amber: rgba(232, 168, 87, 0.45);
+      --glow-violet: rgba(138, 123, 217, 0.45);
 
       --shadow-sm: 0 2px 10px -3px rgba(60, 50, 40, 0.12);
       --shadow-md: 0 6px 22px -6px rgba(60, 50, 40, 0.16);
@@ -572,9 +575,26 @@
       left: 14px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 16px;
       color: var(--ink-faint);
       pointer-events: none;
+      display: flex;
+    }
+
+    .search__icon svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    .date-pill__icon {
+      display: flex;
+      color: var(--ink-soft);
+    }
+
+    .date-pill__icon svg {
+      width: 18px;
+      height: 18px;
+      display: block;
     }
 
     .att-summary {
@@ -606,7 +626,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      padding: 6px 18px calc(var(--bottom-h) + env(safe-area-inset-bottom, 0px) + 18px);
+      padding: 6px 18px calc(env(safe-area-inset-bottom, 0px) + 18px);
     }
 
     .child-card {
@@ -629,18 +649,36 @@
       box-shadow: var(--shadow-sm), 0 0 0 1px var(--glow-present);
     }
 
-    .child-card__avatar {
+    .child-card__info-btn {
       flex-shrink: 0;
       width: 44px;
       height: 44px;
-      border-radius: var(--r-md);
       display: grid;
       place-items: center;
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
-      background: linear-gradient(140deg, var(--peach-strong), var(--amber));
+      border: none;
+      border-radius: 50%;
+      background: var(--bg-soft);
       box-shadow: var(--shadow-sm);
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: transform var(--dur) var(--spring), background var(--dur) var(--ease),
+        color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+
+    .child-card__info-btn svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+
+    .child-card__info-btn:hover {
+      color: var(--terracotta);
+      background: var(--peach);
+    }
+
+    .child-card__info-btn:active {
+      transform: scale(0.88);
+      box-shadow: var(--shadow-md);
     }
 
     .child-card__info {
@@ -649,6 +687,7 @@
     }
 
     .child-card__name {
+      display: block;
       font-size: 15px;
       font-weight: 700;
       letter-spacing: -0.02em;
@@ -656,6 +695,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 100%;
     }
 
     .child-card__status {
@@ -684,119 +724,282 @@
       box-shadow: 0 0 0 3px var(--glow-present);
     }
 
-    .toggle {
-      position: relative;
+    /* Финальная стадия: ребёнок ушёл в указанное время — фиолетовый статус */
+    .child-card.is-left .child-card__status {
+      color: var(--violet);
+    }
+
+    .child-card.is-left .child-card__status .dot {
+      background: var(--violet);
+      box-shadow: 0 0 0 3px var(--glow-violet);
+    }
+
+    /* — Кнопка отметки. Форма и размер фиксированы в обоих состояниях,
+       меняется только иконка и цвет. — */
+    .mark-btn {
       flex-shrink: 0;
       width: 52px;
-      height: 32px;
-      display: inline-block;
-    }
-
-    .toggle__input {
-      position: absolute;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      cursor: pointer;
-      z-index: 2;
-    }
-
-    .toggle__track {
-      position: absolute;
-      inset: 0;
-      border-radius: var(--r-pill);
-      background: var(--bg-soft);
-      box-shadow: inset 0 1px 3px rgba(60, 50, 40, 0.15);
-      transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-    }
-
-    .toggle__thumb {
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: var(--shadow-sm);
+      height: 40px;
       display: grid;
       place-items: center;
-      font-size: 12px;
+      border: 1.5px solid transparent;
+      border-radius: var(--r-md);
+      background: linear-gradient(135deg, var(--emerald), #4f9f6e);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 8px 22px -8px var(--glow-present);
+      transition: background var(--dur) var(--ease), color var(--dur) var(--ease),
+        box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease),
+        transform var(--dur) var(--spring);
+    }
+
+    .mark-btn svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+
+    .mark-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* Состояние «отмечен»: голубая, с иконкой часов. Кликабельная —
+       открывает редактор времени ухода. Размер и форма те же. */
+    .mark-btn.is-marked {
+      background: linear-gradient(135deg, #d6e4f5, #bcd5f0);
+      color: #3576c0;
+      border-color: transparent;
+      box-shadow: 0 6px 18px -8px rgba(74, 144, 217, 0.28);
+      cursor: pointer;
+    }
+
+    .mark-btn.is-marked:active {
+      transform: scale(0.94);
+    }
+
+    /* Финальная стадия: время ухода заполнено. Светло-зелёная, как у
+       кнопок изначально. Больше не нажимается. */
+    .mark-btn.is-done {
+      background: var(--emerald-soft);
+      color: var(--emerald);
+      border-color: transparent;
+      box-shadow: var(--shadow-sm);
+      cursor: default;
+    }
+
+    .mark-btn.is-done:active {
+      transform: none;
+    }
+
+    .child-card.is-present .child-card__info-btn {
+      background: var(--emerald-soft);
+      color: var(--emerald);
+    }
+
+    /* — Оверлей информации о ребёнке — */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      visibility: hidden;
+      transition: visibility 0s linear var(--dur);
+    }
+
+    .overlay.is-open {
+      visibility: visible;
+      transition: visibility 0s;
+    }
+
+    /* Backdrop: мгновенно появляется при открытии (transition: none),
+       и плавно затухает 1→0 на протяжении всей анимации закрытия.
+       Opacity на самом элементе с backdrop-filter не убивает размытие
+       (в отличие от opacity на контейнере-предке) — он лишь делает
+       размытый слой полупрозрачным. */
+    .overlay__backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(44, 42, 38, 0.42);
+      backdrop-filter: blur(8px) saturate(1.1);
+      -webkit-backdrop-filter: blur(8px) saturate(1.1);
+      opacity: 0;
+      transition: opacity var(--dur) var(--ease);
+    }
+
+    .overlay.is-open .overlay__backdrop {
+      opacity: 1;
+      transition: none;
+    }
+
+    .overlay__card {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      background: var(--bg-elevated);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 22px 20px 20px;
+      opacity: 0;
+      transform: translateY(18px) scale(0.96);
+      transition: opacity var(--dur) var(--ease), transform var(--dur) var(--spring);
+    }
+
+    .overlay.is-open .overlay__card {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .overlay__close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: none;
+      border-radius: 50%;
+      background: var(--bg-soft);
+      color: var(--ink-soft);
+      font-size: 16px;
+      cursor: pointer;
       transition: transform var(--dur) var(--spring), background var(--dur) var(--ease),
         color var(--dur) var(--ease);
     }
 
-    .toggle__input:checked + .toggle__track {
-      background: var(--emerald);
-      box-shadow: 0 0 14px 2px var(--glow-present);
+    .overlay__close:active {
+      transform: scale(0.88);
     }
 
-    .toggle__input:checked + .toggle__track + .toggle__thumb {
-      transform: translateX(20px);
-      color: var(--emerald);
+    .overlay__name {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      padding-right: 36px;
+      word-break: break-word;
     }
 
-    .check {
-      flex-shrink: 0;
-      position: relative;
-      width: 44px;
-      height: 44px;
+    .overlay__list {
+      margin: 16px 0 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    .check__input {
-      position: absolute;
-      opacity: 0;
-      inset: 0;
-      margin: 0;
-      cursor: pointer;
+    .overlay__row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .check__box {
-      position: absolute;
-      inset: 0;
-      border-radius: var(--r-md);
-      background: var(--bg-soft);
-      box-shadow: inset 0 1px 3px rgba(60, 50, 40, 0.12);
-      display: grid;
-      place-items: center;
-      font-size: 22px;
-      color: transparent;
-      transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
-        color var(--dur) var(--ease), transform var(--dur) var(--spring);
+    .overlay__row dt {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
     }
 
-    .check__input:checked + .check__box {
-      background: var(--emerald);
-      color: #fff;
-      box-shadow: 0 0 16px 2px var(--glow-present);
-      transform: scale(1.02);
-    }
-
-    .check__input:active + .check__box {
-      transform: scale(0.92);
-    }
-
-    .bottom-bar {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 20;
-      padding: 12px 18px calc(env(safe-area-inset-bottom, 0px) + 14px);
-      background: rgba(255, 255, 255, 0.55);
-      backdrop-filter: blur(22px) saturate(1.6);
-      -webkit-backdrop-filter: blur(22px) saturate(1.6);
-      border-top: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 -8px 30px -12px rgba(60, 50, 40, 0.18);
-    }
-
-    .bottom-bar__hint {
-      font-size: 12px;
-      color: var(--ink-soft);
-      text-align: center;
-      margin-bottom: 8px;
+    .overlay__row dd {
+      font-size: 15px;
       font-weight: 600;
+      color: var(--ink);
+      word-break: break-word;
+    }
+
+    .btn--danger {
+      min-height: var(--tap);
+      border-radius: var(--r-lg);
+      background: linear-gradient(135deg, var(--rose), #d97070);
+      color: #fff;
+      box-shadow: 0 8px 22px -8px rgba(224, 138, 138, 0.6);
+    }
+
+    .btn--danger:active {
+      box-shadow: 0 4px 14px -6px rgba(224, 138, 138, 0.7);
+    }
+
+    /* — Редактор времени ухода (24ч) — */
+    .overlay__title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      padding-right: 36px;
+    }
+
+    .overlay__sub {
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+
+    .time-editor {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 22px 0 20px;
+    }
+
+    .time-editor__field {
+      width: 84px;
+      min-height: 64px;
+      border: 1.5px solid rgba(60, 50, 40, 0.08);
+      border-radius: var(--r-lg);
+      background: var(--bg-soft);
+      font-family: inherit;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-align: center;
+      color: var(--ink);
+      outline: none;
+      transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease),
+        background var(--dur) var(--ease);
+    }
+
+    .time-editor__field:focus {
+      border-color: var(--peach-strong);
+      background: var(--bg-elevated);
+      box-shadow: 0 0 0 3px rgba(232, 155, 107, 0.25);
+    }
+
+    .time-editor__field::placeholder {
+      color: var(--ink-faint);
+      font-weight: 700;
+    }
+
+    .time-editor__field.is-error {
+      border-color: var(--rose);
+      box-shadow: 0 0 0 3px rgba(224, 138, 138, 0.25);
+      animation: shake 0.42s var(--ease);
+    }
+
+    .time-editor__sep {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--ink-faint);
+      user-select: none;
+    }
+
+    .time-editor__error {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: -8px 0 14px;
+      color: var(--rose);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .time-editor__error.is-show {
+      display: flex;
+      animation: errIn 0.3s var(--spring);
     }
 
     .sr-only {
@@ -917,14 +1120,14 @@
         <div class="att-controls">
           <div class="att-controls__row">
             <label class="date-pill">
-              <span aria-hidden="true">📅</span>
+              <span class="date-pill__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
               <input type="date" id="att-date" value="2026-08-11" aria-label="Дата" />
             </label>
           </div>
 
           <div class="att-controls__row">
             <div class="search">
-              <span class="search__icon" aria-hidden="true">🔍</span>
+              <span class="search__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
               <input
                 class="search__input"
                 type="search"
@@ -947,180 +1150,174 @@
         </div>
 
         <div class="children">
-          <label class="child-card is-present">
-            <span class="child-card__avatar" aria-hidden="true">АС</span>
-            <span class="child-card__info">
+          <div class="child-card is-present">
+            <button class="child-card__info-btn" type="button" aria-label="Информация о ребёнке">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+            <div class="child-card__info">
               <span class="child-card__name">Смирнова Анна Петровна</span>
               <span class="child-card__status"><span class="dot"></span> Присутствует</span>
-            </span>
-            <span class="toggle">
-              <input class="toggle__input" type="checkbox" checked />
-              <span class="toggle__track"></span>
-              <span class="toggle__thumb">✓</span>
-            </span>
-          </label>
+            </div>
+            <button class="mark-btn is-marked" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15.5 14"/></svg>
+            </button>
+          </div>
 
-          <label class="child-card is-present">
-            <span class="child-card__avatar" aria-hidden="true">ИК</span>
-            <span class="child-card__info">
+          <div class="child-card is-present">
+            <button class="child-card__info-btn" type="button" aria-label="Информация о ребёнке">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+            <div class="child-card__info">
               <span class="child-card__name">Иванов Кирилл Андреевич</span>
               <span class="child-card__status"><span class="dot"></span> Присутствует</span>
-            </span>
-            <span class="toggle">
-              <input class="toggle__input" type="checkbox" checked />
-              <span class="toggle__track"></span>
-              <span class="toggle__thumb">✓</span>
-            </span>
-          </label>
+            </div>
+            <button class="mark-btn is-marked" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15.5 14"/></svg>
+            </button>
+          </div>
 
-          <label class="child-card">
-            <span class="child-card__avatar" aria-hidden="true">ЕМ</span>
-            <span class="child-card__info">
+          <div class="child-card">
+            <button class="child-card__info-btn" type="button" aria-label="Информация о ребёнке">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+            <div class="child-card__info">
               <span class="child-card__name">Егоров Максим Сергеевич</span>
               <span class="child-card__status"><span class="dot"></span> Отсутствует</span>
-            </span>
-            <span class="toggle">
-              <input class="toggle__input" type="checkbox" />
-              <span class="toggle__track"></span>
-              <span class="toggle__thumb"></span>
-            </span>
-          </label>
+            </div>
+            <button class="mark-btn" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </button>
+          </div>
 
-          <label class="child-card is-present">
-            <span class="child-card__avatar" aria-hidden="true">КД</span>
-            <span class="child-card__info">
+          <div class="child-card is-present">
+            <button class="child-card__info-btn" type="button" aria-label="Информация о ребёнке">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+            <div class="child-card__info">
               <span class="child-card__name">Козлова Дарья Игоревна</span>
               <span class="child-card__status"><span class="dot"></span> Присутствует</span>
-            </span>
-            <span class="toggle">
-              <input class="toggle__input" type="checkbox" checked />
-              <span class="toggle__track"></span>
-              <span class="toggle__thumb">✓</span>
-            </span>
-          </label>
+            </div>
+            <button class="mark-btn is-marked" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15.5 14"/></svg>
+            </button>
+          </div>
 
-          <label class="child-card">
-            <span class="child-card__avatar" aria-hidden="true">ПЛ</span>
-            <span class="child-card__info">
+          <div class="child-card">
+            <button class="child-card__info-btn" type="button" aria-label="Информация о ребёнке">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+            <div class="child-card__info">
               <span class="child-card__name">Петров Лев Олегович</span>
               <span class="child-card__status"><span class="dot"></span> Отсутствует</span>
-            </span>
-            <span class="toggle">
-              <input class="toggle__input" type="checkbox" />
-              <span class="toggle__track"></span>
-              <span class="toggle__thumb"></span>
-            </span>
-          </label>
+            </div>
+            <button class="mark-btn" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </button>
+          </div>
 
-          <label class="child-card is-present">
-            <span class="child-card__avatar" aria-hidden="true">НС</span>
-            <span class="child-card__info">
+          <div class="child-card is-present">
+            <button class="child-card__info-btn" type="button" aria-label="Информация о ребёнке">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+            <div class="child-card__info">
               <span class="child-card__name">Новикова София Алексеевна</span>
               <span class="child-card__status"><span class="dot"></span> Присутствует</span>
-            </span>
-            <span class="toggle">
-              <input class="toggle__input" type="checkbox" checked />
-              <span class="toggle__track"></span>
-              <span class="toggle__thumb">✓</span>
-            </span>
-          </label>
+            </div>
+            <button class="mark-btn is-marked" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15.5 14"/></svg>
+            </button>
+          </div>
 
-          <label class="child-card is-present">
-            <span class="child-card__avatar" aria-hidden="true">ФА</span>
-            <span class="child-card__info">
+          <div class="child-card is-present">
+            <button class="child-card__info-btn" type="button" aria-label="Информация о ребёнке">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+            <div class="child-card__info">
               <span class="child-card__name">Фёдоров Артём Дмитриевич</span>
               <span class="child-card__status"><span class="dot"></span> Присутствует</span>
-            </span>
-            <span class="toggle">
-              <input class="toggle__input" type="checkbox" checked />
-              <span class="toggle__track"></span>
-              <span class="toggle__thumb">✓</span>
-            </span>
-          </label>
+            </div>
+            <button class="mark-btn is-marked" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15.5 14"/></svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="bottom-bar">
-        <p class="bottom-bar__hint">18 из 22 отмечены</p>
-        <button id="save-sync" class="btn btn--primary btn--block">
-          Сохранить и синхронизировать ✓
+    </section>
+
+    <!-- Оверлей информации о ребёнке -->
+    <div class="overlay" id="child-overlay" aria-hidden="true">
+      <div class="overlay__backdrop" data-overlay-close></div>
+      <div class="overlay__card" role="dialog" aria-modal="true" aria-labelledby="overlay-name">
+        <button class="overlay__close" type="button" data-overlay-close aria-label="Закрыть">✕</button>
+        <h2 class="overlay__name" id="overlay-name">—</h2>
+        <dl class="overlay__list">
+          <div class="overlay__row">
+            <dt>Дата рождения</dt>
+            <dd id="overlay-dob">—</dd>
+          </div>
+          <div class="overlay__row">
+            <dt>Контакты</dt>
+            <dd id="overlay-contacts">—</dd>
+          </div>
+        </dl>
+        <button class="btn btn--danger btn--block" id="overlay-cancel" type="button">
+          Отменить пометку
         </button>
       </div>
-    </section>
+    </div>
+
+    <!-- Оверлей выбора времени ухода -->
+    <div class="overlay" id="time-overlay" aria-hidden="true">
+      <div class="overlay__backdrop" data-time-close></div>
+      <div class="overlay__card" role="dialog" aria-modal="true" aria-labelledby="time-title">
+        <button class="overlay__close" type="button" data-time-close aria-label="Закрыть">✕</button>
+        <h2 class="overlay__title" id="time-title">Время ухода</h2>
+        <p class="overlay__sub">Во сколько ребёнок ушёл домой</p>
+        <div class="time-editor">
+          <input
+            class="time-editor__field"
+            id="time-hh"
+            type="text"
+            inputmode="numeric"
+            maxlength="2"
+            placeholder="ЧЧ"
+            aria-label="Часы"
+            autocomplete="off"
+          />
+          <span class="time-editor__sep">:</span>
+          <input
+            class="time-editor__field"
+            id="time-mm"
+            type="text"
+            inputmode="numeric"
+            maxlength="2"
+            placeholder="ММ"
+            aria-label="Минуты"
+            autocomplete="off"
+          />
+        </div>
+        <p class="time-editor__error" id="time-error" role="alert">Введите корректное время</p>
+        <button class="btn btn--primary btn--block" id="time-done" type="button">
+          Готово
+        </button>
+      </div>
+    </div>
 
   </div>
   <script>
       (function () {
         "use strict";
 
-        // ==========================================
-        // 1. НАСТРОЙКИ SUPABASE
-        // ==========================================
-        const SUPABASE_URL = 'https://dlhrvqkdcylzdxrphbma.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_2AGKRNlHNkbZ-LWIBTZzrQ_oUn3HChP';
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          realtime: { params: { eventsPerSecond: 10 } },
-        });
+        const API_BASE = "http://127.0.0.1:8000/api";
 
-        const AUTH_KEY = "kindergarten_auth";
+        const loginInput = document.getElementById("login-password");
+        const loginBtn = document.getElementById("login-enter");
+        const loginError = document.getElementById("login-error");
+        const loginFieldGroup = loginInput ? loginInput.closest(".field") : null;
 
         // ==========================================
-        // 2. СОСТОЯНИЕ ПРИЛОЖЕНИЯ
-        // ==========================================
-        let currentGroupId = null;        // выбранная группа
-        let currentGroupName = "";        // её название (для шапки)
-        let currentChildren = [];          // [{ id, full_name }] — дети текущей группы
-        let attendanceMap = {};           // child_id -> boolean (присутствие для выбранной даты)
-        let currentGroupChildIds = new Set(); // множество child_id текущей группы (фильтр realtime)
-        let realtimeChannel = null;       // активная подписка
-        let isLoadingChildren = false;    // защита от повторных запросов
-
-        // DOM-ссылки
-        const childrenContainer = document.querySelector("#attendance-screen .children");
-        const dateInput = document.getElementById("att-date");
-        const searchInput = document.querySelector(".search__input");
-        const summaryEl = document.querySelector("#attendance-screen .att-summary");
-        const bottomHint = document.querySelector("#attendance-screen .bottom-bar__hint");
-
-        // ==========================================
-        // 3. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-        // ==========================================
-
-        // Инициалы: "Иванов Иван" -> "ИИ", "Смирнова Анна Петровна" -> "СА"
-        function getInitials(fullName) {
-          const parts = (fullName || "").trim().split(/\s+/).filter(Boolean);
-          if (parts.length === 0) return "—";
-          if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-          return (parts[0][0] + parts[1][0]).toUpperCase();
-        }
-
-        // Экранирование текста, вставляемого в HTML
-        function esc(value) {
-          return String(value == null ? "" : value)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#39;");
-        }
-
-        // Текущая выбранная дата (YYYY-MM-DD)
-        function getSelectedDate() {
-          return dateInput ? dateInput.value : "";
-        }
-
-        // Тактильная отдача Telegram (если запущено внутри ТГ)
-        function haptic(type, payload) {
-          try {
-            const hf = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback;
-            if (!hf) return;
-            if (type === "impact") hf.impactOccurred(payload || "light");
-            else if (type === "notification") hf.notificationOccurred(payload || "error");
-          } catch (e) {}
-        }
-
-        // ==========================================
-        // 4. УПРАВЛЕНИЕ ЭКРАНАМИ
+        // НАВИГАЦИЯ МЕЖДУ ЭКРАНАМИ (чистый UI, без логики/БД)
         // ==========================================
         function showScreen(id) {
           document.querySelectorAll(".screen").forEach(function (s) {
@@ -1135,479 +1332,361 @@
           }
         }
 
+        function showLoginError(msg) {
+          if (loginError) loginError.textContent = msg;
+          if (loginFieldGroup) loginFieldGroup.classList.add("field--error");
+          haptic("notification", "error");
+        } 
+
+        function clearLoginError() {
+          if (loginError) loginError.textContent = "";
+          if (loginFieldGroup) loginFieldGroup.classList.remove("field--error");
+        }
+
         document.querySelectorAll("[data-back]").forEach(function (btn) {
           btn.addEventListener("click", function () {
             showScreen(btn.getAttribute("data-back"));
           });
         });
 
-        // ==========================================
-        // 5. АВТОРИЗАЦИЯ (RPC verify_app_password)
-        // ==========================================
-        const loginField = document.querySelector(".field--password");
-        const loginInput = document.getElementById("login-password");
-        const loginError = document.getElementById("login-error");
-        const loginBtn = document.getElementById("login-enter");
-        let isLoggingIn = false;
-
-        function clearLoginError() {
-          if (loginField) loginField.classList.remove("field--error");
-          if (loginError) loginError.textContent = "";
+        if (loginBtn) {
+          loginBtn.addEventListener("click", handleLogin);
         }
 
-        function showLoginError(message) {
-          if (loginField) loginField.classList.add("field--error");
-          if (loginError) loginError.textContent = message || "Неверный пароль";
-          haptic("notification", "error");
-          if (loginInput) {
-            loginInput.focus();
-            loginInput.select();
-          }
-        }
-
-        function setLoginLoading(loading) {
-          if (!loginBtn) return;
-          loginBtn.disabled = loading;
-          loginBtn.textContent = loading ? "Проверка…" : "Войти →";
+        if (loginInput) {
+          loginInput.addEventListener("input", clearLoginError);
+          loginInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") handleLogin();
+          });
         }
 
         async function handleLogin() {
-          if (isLoggingIn) return;
           const password = loginInput ? loginInput.value.trim() : "";
+
           if (!password) {
             showLoginError("Введите пароль");
             return;
           }
 
-          isLoggingIn = true;
-          setLoginLoading(true);
           clearLoginError();
+          if (loginBtn) loginBtn.disabled = true;
 
           try {
-            const { data, error } = await db.rpc("verify_app_password", {
-              user_input: password,
+            const response = await fetch(`${API_BASE}/auth/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password: password })
             });
 
-            if (error) throw error;
+            const data = await response.json();
 
-            // RPC возвращает boolean (приходит как true/false)
-            const ok = data === true || data === "true" || data === "t";
+            if (!response.ok) {
+              throw new Error(data.detail || "Неверный пароль");
+            }
 
-            if (ok) {
-              localStorage.setItem(AUTH_KEY, "true");
-              haptic("impact", "light");
+            localStorage.setItem("auth_token", data.access_token);
+            if (loginInput) loginInput.value = "";
+            
+            haptic("impact", "light");
+            showScreen("group-screen");
+
+          } catch (err) {
+            showLoginError(err.message || "Ошибка соединения с сервером");
+          } finally {
+            if (loginBtn) loginBtn.disabled = false;
+          }
+        }
+
+        async function checkAuthSession() {
+          const token = localStorage.getItem("auth_token");
+          if (!token) return;
+
+          try {
+            const response = await fetch(`${API_BASE}/auth/me`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+              // Сессия валидна — сразу перебрасываем на группы
               showScreen("group-screen");
-              await loadGroups();
-              startRealtime(); // запускаем websocket-подписку после входа
             } else {
-              showLoginError("Неверный пароль");
+              // Токен просрочен или невалиден
+              localStorage.removeItem("auth_token");
             }
-          } catch (err) {
-            console.error("Ошибка авторизации:", err);
-            showLoginError("Ошибка соединения. Попробуйте ещё раз.");
-          } finally {
-            isLoggingIn = false;
-            setLoginLoading(false);
+          } catch (e) {
+            console.warn("Не удалось проверить сессию на бэкенде:", e);
           }
         }
 
-        if (loginBtn) loginBtn.addEventListener("click", handleLogin);
-        if (loginInput) {
-          loginInput.addEventListener("input", clearLoginError);
-          loginInput.addEventListener("keydown", function (e) {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleLogin();
-            }
+        checkAuthSession();
+
+        document.querySelectorAll(".group-card[data-go]").forEach(function (card) {
+          card.addEventListener("click", function () {
+            const nameEl = card.querySelector(".group-card__name");
+            const titleEl = document.querySelector("#attendance-screen .header__title");
+            if (nameEl && titleEl) titleEl.textContent = nameEl.textContent;
+            showScreen(card.getAttribute("data-go"));
           });
-        }
+        });
+
+
 
         // ==========================================
-        // 6. ЗАГРУЗКА ГРУПП
+        // ОТМЕТКА ПОСЕЩАЕМОСТИ (чистый UI-стейт, без БД)
         // ==========================================
-        async function loadGroups() {
-          const container = document.querySelector(".group-grid");
-          if (!container) return;
+        const PRESENT_TEXT = "Присутствует";
+        const ABSENT_TEXT = "Отсутствует";
+        const LEFT_TEXT = "Ушёл в";
 
-          container.innerHTML =
-            '<div style="text-align:center; padding:20px; color:var(--ink-soft); grid-column:1 / -1;">Загрузка групп…</div>';
+        // Иконки кнопки отметки: галочка (неотмечено) и часы (отмечено)
+        const ICON_CHECK =
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+        const ICON_CLOCK =
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15.5 14"/></svg>';
 
+        function haptic(type, payload) {
           try {
-            const { data: groups, error } = await db
-              .from("groups")
-              .select("*")
-              .order("id", { ascending: true });
-
-            if (error) throw error;
-
-            if (!groups || groups.length === 0) {
-              container.innerHTML =
-                '<div style="text-align:center; padding:20px; grid-column:1 / -1; color:var(--ink-soft);">Группы не найдены</div>';
-              return;
-            }
-
-            container.innerHTML = groups
-              .map(function (group) {
-                return (
-                  '<button class="group-card" data-tone="' + esc(group.tone || "peach") +
-                  '" data-id="' + esc(group.id) + '">' +
-                  '<span class="group-card__icon" aria-hidden="true">' + esc(group.icon || "👶") + "</span>" +
-                  '<span class="group-card__name">' + esc(group.name) + "</span>" +
-                  '<span class="group-card__meta"><span class="group-card__badge">Открыть</span></span>' +
-                  "</button>"
-                );
-              })
-              .join("");
-
-            container.querySelectorAll(".group-card").forEach(function (card) {
-              card.addEventListener("click", function () {
-                const groupId = card.getAttribute("data-id");
-                const groupName = card.querySelector(".group-card__name").textContent;
-                openGroupAttendance(groupId, groupName);
-              });
-            });
-          } catch (err) {
-            console.error("Ошибка загрузки групп:", err);
-            container.innerHTML =
-              '<div style="color:var(--rose); text-align:center; grid-column:1 / -1;">Ошибка загрузки данных</div>';
-          }
+            const hf = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback;
+            if (!hf) return;
+            if (type === "impact") hf.impactOccurred(payload || "light");
+            else if (type === "notification") hf.notificationOccurred(payload || "error");
+          } catch (e) {}
         }
 
-        // ==========================================
-        // 7. ОТКРЫТИЕ ГРУППЫ -> ЭКРАН ПОСЕЩАЕМОСТИ
-        // ==========================================
-        function openGroupAttendance(groupId, groupName) {
-          currentGroupId = groupId;
-          currentGroupName = groupName;
-
-          const titleElem = document.querySelector("#attendance-screen .header__title");
-          if (titleElem) titleElem.textContent = groupName;
-
-          // Сбрасываем поиск и дату при входе в группу
-          if (searchInput) searchInput.value = "";
-          if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
-
-          showScreen("attendance-screen");
-          loadChildren();
-        }
-
-        // ==========================================
-        // 8. ЗАГРУЗКА ДЕТЕЙ + ПОСЕЩАЕМОСТИ
-        // ==========================================
-        async function loadChildren() {
-          if (!currentGroupId || !childrenContainer) return;
-          if (isLoadingChildren) return;
-          isLoadingChildren = true;
-
-          const selectedDate = getSelectedDate();
-
-          // Состояние загрузки
-          childrenContainer.innerHTML =
-            '<div style="text-align:center; padding:24px; color:var(--ink-soft);">Загрузка детей…</div>';
-          if (summaryEl) summaryEl.style.opacity = "0.5";
-
-          try {
-            // 1) Дети текущей группы
-            const { data: children, error: cErr } = await db
-              .from("children")
-              .select("id, full_name")
-              .eq("group_id", currentGroupId)
-              .order("full_name", { ascending: true });
-
-            if (cErr) throw cErr;
-
-            currentChildren = children || [];
-            currentGroupChildIds = new Set(currentChildren.map((c) => c.id));
-            attendanceMap = {};
-
-            // 2) Посещаемость этих детей на выбранную дату
-            if (currentChildren.length > 0) {
-              const childIds = currentChildren.map((c) => c.id);
-              const { data: att, error: aErr } = await db
-                .from("attendance")
-                .select("child_id, is_present")
-                .eq("date", selectedDate)
-                .in("child_id", childIds);
-
-              if (aErr) throw aErr;
-
-              (att || []).forEach(function (row) {
-                attendanceMap[row.child_id] = !!row.is_present;
-              });
-            }
-
-            renderChildren();
-          } catch (err) {
-            console.error("Ошибка загрузки детей:", err);
-            childrenContainer.innerHTML =
-              '<div style="color:var(--rose); text-align:center; padding:24px;">Не удалось загрузить список</div>';
-            currentChildren = [];
-            currentGroupChildIds = new Set();
-            attendanceMap = {};
-          } finally {
-            isLoadingChildren = false;
-            if (summaryEl) summaryEl.style.opacity = "1";
-          }
-        }
-
-        // ==========================================
-        // 9. РЕНДЕР СПИСКА ДЕТЕЙ (с учётом поиска)
-        // ==========================================
-        function childCardHTML(child, present) {
-          return (
-            '<label class="child-card' + (present ? " is-present" : "") +
-            '" data-child-id="' + esc(child.id) + '" data-name="' + esc(child.full_name) + '">' +
-            '<span class="child-card__avatar" aria-hidden="true">' + esc(getInitials(child.full_name)) + "</span>" +
-            '<span class="child-card__info">' +
-            '<span class="child-card__name">' + esc(child.full_name) + "</span>" +
-            '<span class="child-card__status"><span class="dot"></span> ' +
-            (present ? "Присутствует" : "Отсутствует") + "</span>" +
-            "</span>" +
-            '<span class="toggle">' +
-            '<input class="toggle__input" type="checkbox"' + (present ? " checked" : "") + " />" +
-            '<span class="toggle__track"></span>' +
-            '<span class="toggle__thumb">' + (present ? "✓" : "") + "</span>" +
-            "</span>" +
-            "</label>"
-          );
-        }
-
-        function renderChildren() {
-          if (!childrenContainer) return;
-          const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
-
-          if (currentChildren.length === 0) {
-            childrenContainer.innerHTML =
-              '<div style="text-align:center; padding:24px; color:var(--ink-soft);">В группе нет детей</div>';
-            updateSummary();
-            return;
-          }
-
-          const filtered = currentChildren.filter(function (c) {
-            return (c.full_name || "").toLowerCase().includes(query);
-          });
-
-          if (filtered.length === 0) {
-            childrenContainer.innerHTML =
-              '<div style="text-align:center; padding:24px; color:var(--ink-soft);">Ничего не найдено</div>';
-            updateSummary();
-            return;
-          }
-
-          childrenContainer.innerHTML = filtered
-            .map(function (c) {
-              return childCardHTML(c, !!attendanceMap[c.id]);
-            })
-            .join("");
-
-          updateSummary();
-        }
-
-        // ==========================================
-        // 10. СВОДКА ПОСЕЩАЕМОСТИ
-        // ==========================================
         function updateSummary() {
-          const total = currentChildren.length;
+          const cards = document.querySelectorAll("#attendance-screen .child-card");
           let present = 0;
-          currentChildren.forEach(function (c) {
-            if (attendanceMap[c.id]) present++;
+          let left = 0;
+          cards.forEach(function (c) {
+            if (c.classList.contains("is-left")) left++;
+            else if (c.classList.contains("is-present")) present++;
           });
-          const absent = total - present;
-
-          if (summaryEl) {
-            summaryEl.innerHTML =
+          const total = cards.length;
+          const absent = total - present - left;
+          const summary = document.querySelector("#attendance-screen .att-summary");
+          if (summary) {
+            summary.innerHTML =
               '<span class="att-summary__chip">' +
               '<span class="att-summary__dot" style="background:var(--emerald)"></span> ' +
               present + " присутствуют</span>" +
               '<span class="att-summary__chip">' +
+              '<span class="att-summary__dot" style="background:var(--violet)"></span> ' +
+              left + " ушли</span>" +
+              '<span class="att-summary__chip">' +
               '<span class="att-summary__dot" style="background:var(--rose)"></span> ' +
               absent + " отсутствуют</span>";
           }
-
-          if (bottomHint) {
-            bottomHint.textContent = present + " из " + total + " отмечены";
-          }
         }
 
-        // ==========================================
-        // 11. СОХРАНЕНИЕ (UPSERT) ПРИ ПЕРЕКЛЮЧЕНИИ
-        // ==========================================
-        async function saveAttendance(childId, date, isPresent) {
-          const { error } = await db.from("attendance").upsert(
-            {
-              child_id: childId,
-              date: date,
-              is_present: isPresent,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "child_id, date" }
-          );
-          if (error) throw error;
-        }
-
-        // Делегированный обработчик переключения чекбоксов
-        childrenContainer.addEventListener("change", async function (e) {
-          const input = e.target;
-          if (!input.classList.contains("toggle__input")) return;
-
-          const card = input.closest(".child-card");
-          if (!card) return;
-
-          const childId = card.getAttribute("data-child-id");
-          const isPresent = input.checked;
-          const selectedDate = getSelectedDate();
-
-          // Оптимистичное обновление UI + состояния
-          card.classList.toggle("is-present", isPresent);
+        // present = true  → отметить: голубая кнопка с часами (кликабельна, открывает редактор времени)
+        // present = false → полный сброс в начальное состояние (зелёная кнопка с галочкой, активна)
+        function setPresent(card, present) {
+          card.classList.toggle("is-present", present);
+          card.classList.remove("is-left");              // сброс финальной стадии (фиолетовый статус)
           const status = card.querySelector(".child-card__status");
           if (status) {
-            status.innerHTML = '<span class="dot"></span> ' + (isPresent ? "Присутствует" : "Отсутствует");
+            status.innerHTML = '<span class="dot"></span> ' + (present ? PRESENT_TEXT : ABSENT_TEXT);
           }
-          const thumb = card.querySelector(".toggle__thumb");
-          if (thumb) thumb.textContent = isPresent ? "✓" : "";
-          attendanceMap[childId] = isPresent;
+          const btn = card.querySelector(".mark-btn");
+          if (btn) {
+            btn.classList.toggle("is-marked", present);
+            btn.classList.remove("is-done");              // сброс финальной стадии кнопки
+            btn.disabled = false;                          // кликабельна в обоих «недоделанных» состояниях
+            btn.innerHTML = present ? ICON_CLOCK : ICON_CHECK;
+          }
           updateSummary();
+        }
 
-          haptic("impact", "light");
-
-          // Сохранение в БД
-          input.disabled = true;
-          try {
-            await saveAttendance(childId, selectedDate, isPresent);
-          } catch (err) {
-            console.error("Ошибка сохранения посещаемости:", err);
-            // Откат оптимистичного изменения
-            const reverted = !isPresent;
-            input.checked = reverted;
-            card.classList.toggle("is-present", reverted);
-            if (status) {
-              status.innerHTML = '<span class="dot"></span> ' + (reverted ? "Присутствует" : "Отсутствует");
-            }
-            if (thumb) thumb.textContent = reverted ? "✓" : "";
-            attendanceMap[childId] = reverted;
-            updateSummary();
-            haptic("notification", "error");
-            alert("Не удалось сохранить. Проверьте подключение.");
-          } finally {
-            input.disabled = false;
+        // Финальная стадия: время ухода заполнено.
+        // Кнопка — светло-зелёная с галочкой (как в начальном), больше не нажимается.
+        // Статус — фиолетовый «Ушёл в HH:MM».
+        function setDone(card, hh, mm) {
+          card.classList.remove("is-present");
+          card.classList.add("is-left");
+          const status = card.querySelector(".child-card__status");
+          if (status) {
+            const time = pad2(hh) + ":" + pad2(mm);
+            status.innerHTML = '<span class="dot"></span> ' + LEFT_TEXT + " " + time;
           }
+          const btn = card.querySelector(".mark-btn");
+          if (btn) {
+            btn.classList.remove("is-marked");
+            btn.classList.add("is-done");
+            btn.disabled = true;
+            btn.innerHTML = ICON_CHECK;
+          }
+          updateSummary();
+        }
+
+        function pad2(n) {
+          return String(n).padStart(2, "0");
+        }
+
+        document.querySelectorAll(".child-card .mark-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            const card = btn.closest(".child-card");
+            if (!card) return;
+            if (btn.classList.contains("is-done")) return;     // финал — не нажимается
+            if (btn.classList.contains("is-marked")) {
+              openTimeOverlay(card);                            // отмечен → редактор времени
+              return;
+            }
+            setPresent(card, true);                             // начальное → отметить
+            haptic("impact", "light");
+          });
         });
 
         // ==========================================
-        // 12. ПОИСК И СМЕНА ДАТЫ
+        // ОВЕРЛЕЙ ИНФОРМАЦИИ О РЕБЁНКЕ
         // ==========================================
-        if (searchInput) {
-          searchInput.addEventListener("input", function () {
-            renderChildren();
-          });
+        const overlay = document.getElementById("child-overlay");
+        const overlayName = document.getElementById("overlay-name");
+        let activeCard = null;
+
+        function openOverlay(card) {
+          activeCard = card;
+          if (overlayName) {
+            const nameEl = card.querySelector(".child-card__name");
+            overlayName.textContent = nameEl ? nameEl.textContent : "";
+          }
+          // Поля ДР / родители / контакты — шаблон-заглушки,
+          // будут заполняться данными из FastAPI.
+          overlay.classList.add("is-open");
+          overlay.setAttribute("aria-hidden", "false");
         }
 
-        if (dateInput) {
-          dateInput.addEventListener("change", function () {
-            // Перечитываем посещаемость для новой даты и перерисовываем список
-            loadChildren();
-          });
+        function closeOverlay() {
+          overlay.classList.remove("is-open");
+          overlay.setAttribute("aria-hidden", "true");
+          activeCard = null;
         }
 
-        // Кнопка «Сохранить и синхронизировать» — ручная синхронизация
-        const saveSyncBtn = document.getElementById("save-sync");
-        if (saveSyncBtn) {
-          saveSyncBtn.addEventListener("click", function () {
-            haptic("impact", "light");
-            loadChildren();
-          });
-        }
-
-        // ==========================================
-        // 13. REALTIME (Supabase WebSockets)
-        // ==========================================
-        function startRealtime() {
-          if (realtimeChannel) return; // подписка уже активна
-
-          realtimeChannel = db
-            .channel("attendance-realtime")
-            .on(
-              "postgres_changes",
-              { event: "*", schema: "public", table: "attendance" },
-              handleRealtimeEvent
-            )
-            .subscribe(function (status) {
-              if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-                console.warn("Realtime-соединение потеряно:", status);
-              }
+        if (overlay) {
+          document.querySelectorAll(".child-card__info-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              const card = btn.closest(".child-card");
+              if (card) openOverlay(card);
             });
+          });
+
+          overlay.querySelectorAll("[data-overlay-close]").forEach(function (el) {
+            el.addEventListener("click", closeOverlay);
+          });
+
+          const cancelBtn = document.getElementById("overlay-cancel");
+          if (cancelBtn) {
+            cancelBtn.addEventListener("click", function () {
+              if (activeCard) {
+                setPresent(activeCard, false);
+                haptic("impact", "light");
+              }
+              closeOverlay();
+            });
+          }
         }
 
-        function handleRealtimeEvent(payload) {
-          try {
-            // Поддерживаем INSERT и UPDATE
-            const row = payload.eventType === "DELETE" ? payload.old : payload.new;
-            if (!row || !row.child_id || !row.date) return;
+        // ==========================================
+        // ОВЕРЛЕЙ ВРЕМЕНИ УХОДА
+        // ==========================================
+        const timeOverlay = document.getElementById("time-overlay");
+        const timeHh = document.getElementById("time-hh");
+        const timeMm = document.getElementById("time-mm");
+        const timeError = document.getElementById("time-error");
+        let activeTimeCard = null;
 
-            const selectedDate = getSelectedDate();
+        function clearTimeError() {
+          if (timeError) timeError.classList.remove("is-show");
+          if (timeHh) timeHh.classList.remove("is-error");
+          if (timeMm) timeMm.classList.remove("is-error");
+        }
 
-            // Игнорируем изменения вне текущей даты/группы
-            if (row.date !== selectedDate) return;
-            if (!currentGroupChildIds.has(row.child_id)) return;
+        function openTimeOverlay(card) {
+          activeTimeCard = card;
+          if (timeHh) timeHh.value = "";
+          if (timeMm) timeMm.value = "";
+          clearTimeError();
+          if (timeOverlay) {
+            timeOverlay.classList.add("is-open");
+            timeOverlay.setAttribute("aria-hidden", "false");
+          }
+          if (timeHh) timeHh.focus();
+        }
 
-            const isPresent = !!row.is_present;
-            attendanceMap[row.child_id] = isPresent;
+        function closeTimeOverlay() {
+          if (timeOverlay) {
+            timeOverlay.classList.remove("is-open");
+            timeOverlay.setAttribute("aria-hidden", "true");
+          }
+          activeTimeCard = null;
+        }
 
-            // Обновляем конкретную карточку без полной перерисовки
-            const card = childrenContainer.querySelector(
-              '.child-card[data-child-id="' + CSS.escape(String(row.child_id)) + '"]'
-            );
-            if (card) {
-              const input = card.querySelector(".toggle__input");
-              if (input && input.checked !== isPresent) {
-                input.checked = isPresent; // программное изменение — событие change не сработает
-              }
-              card.classList.toggle("is-present", isPresent);
-              const status = card.querySelector(".child-card__status");
-              if (status) {
-                status.innerHTML = '<span class="dot"></span> ' + (isPresent ? "Присутствует" : "Отсутствует");
-              }
-              const thumb = card.querySelector(".toggle__thumb");
-              if (thumb) thumb.textContent = isPresent ? "✓" : "";
+        function showTimeError() {
+          if (timeError) timeError.classList.add("is-show");
+          if (timeHh) timeHh.classList.add("is-error");
+          if (timeMm) timeMm.classList.add("is-error");
+          haptic("notification", "error");
+        }
+
+        // Только цифры, максимум 2 символа, автопереход ЧЧ → ММ
+        function bindTimeField(field, nextField) {
+          if (!field) return;
+          field.addEventListener("input", function () {
+            field.value = field.value.replace(/\D/g, "").slice(0, 2);
+            clearTimeError();
+            if (field.value.length === 2 && nextField) nextField.focus();
+          });
+          field.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleTimeDone();
             }
+          });
+          field.addEventListener("focus", function () {
+            field.select();
+          });
+        }
 
-            updateSummary();
+        function handleTimeDone() {
+          const hh = timeHh ? timeHh.value.trim() : "";
+          const mm = timeMm ? timeMm.value.trim() : "";
+          const h = parseInt(hh, 10);
+          const m = parseInt(mm, 10);
+          const hOk = hh !== "" && !isNaN(h) && h >= 0 && h <= 23;
+          const mOk = mm !== "" && !isNaN(m) && m >= 0 && m <= 59;
+          if (!hOk || !mOk) {
+            showTimeError();
+            return;
+          }
+          if (activeTimeCard) {
+            setDone(activeTimeCard, h, m);
             haptic("impact", "light");
-          } catch (err) {
-            console.error("Ошибка обработки realtime-события:", err);
           }
+          closeTimeOverlay();
+        }
+
+        if (timeOverlay) {
+          bindTimeField(timeHh, timeMm);
+          bindTimeField(timeMm, null);
+
+          timeOverlay.querySelectorAll("[data-time-close]").forEach(function (el) {
+            el.addEventListener("click", closeTimeOverlay);
+          });
+
+          const doneBtn = document.getElementById("time-done");
+          if (doneBtn) doneBtn.addEventListener("click", handleTimeDone);
         }
 
         // ==========================================
-        // 14. ИНИЦИАЛИЗАЦИЯ
+        // ИНИЦИАЛИЗАЦИЯ
         // ==========================================
-        function initApp() {
-          // Инициализация Telegram WebApp
-          if (window.Telegram && window.Telegram.WebApp) {
-            try {
-              const tg = window.Telegram.WebApp;
-              tg.ready();
-              tg.expand();
-            } catch (e) {}
-          }
+        updateSummary();
 
-          // Дату по умолчанию ставим на сегодня
-          if (dateInput && !dateInput.value) {
-            dateInput.value = new Date().toISOString().slice(0, 10);
-          }
-
-          // Проверяем, авторизован ли пользователь ранее
-          if (localStorage.getItem(AUTH_KEY) === "true") {
-            showScreen("group-screen");
-            loadGroups();
-            startRealtime();
-          } else {
-            showScreen("login-screen");
-          }
+        if (window.Telegram && window.Telegram.WebApp) {
+          try {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+          } catch (e) {}
         }
-
-        initApp();
-
       })();
   </script>
 </body>

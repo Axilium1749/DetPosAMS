@@ -521,29 +521,57 @@
 
     .date-pill {
       flex: 1;
+      width: 100%;
       min-height: var(--tap);
       display: flex;
       align-items: center;
       gap: 8px;
       padding: 0 14px;
+      border: none;
       border-radius: var(--r-md);
       background: var(--bg-elevated);
       box-shadow: var(--shadow-sm);
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--ink);
-    }
-
-    .date-pill input[type="date"] {
-      border: none;
-      background: transparent;
       font-family: inherit;
       font-size: 14px;
       font-weight: 600;
+      text-align: left;
       color: var(--ink);
-      width: 100%;
-      padding: 14px 0;
+      cursor: pointer;
+      transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--spring);
+    }
+
+    .date-pill:active {
+      transform: scale(0.985);
+    }
+
+    .date-pill:focus-visible {
+      box-shadow: 0 0 0 2px var(--peach-strong);
       outline: none;
+    }
+
+    .date-pill__value {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .date-pill__chevron {
+      display: flex;
+      color: var(--ink-faint);
+      transition: color var(--dur) var(--ease), transform var(--dur) var(--spring);
+    }
+
+    .date-pill__chevron svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .date-pill:focus-visible .date-pill__chevron,
+    .date-pill:hover .date-pill__chevron {
+      color: var(--peach-strong);
     }
 
     .search {
@@ -589,6 +617,11 @@
     .date-pill__icon {
       display: flex;
       color: var(--ink-soft);
+      transition: color var(--dur) var(--ease);
+    }
+
+    .date-pill:focus-visible .date-pill__icon {
+      color: var(--peach-strong);
     }
 
     .date-pill__icon svg {
@@ -1002,6 +1035,176 @@
       animation: errIn 0.3s var(--spring);
     }
 
+    /* — Кастомный календарь — */
+    /* — Контейнер плашки даты — */
+    .date-field {
+      position: relative;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* — Выпадающий календарь — */
+    .cal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 39;
+      visibility: hidden;
+      transition: visibility 0s linear var(--dur);
+    }
+
+    .cal-backdrop.is-open {
+      visibility: visible;
+      transition: visibility 0s;
+    }
+
+    .cal-dropdown {
+      position: fixed;
+      z-index: 40;
+      width: 280px;
+      max-width: calc(100vw - 32px);
+      padding: 14px 12px 12px;
+      background: var(--bg-elevated);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px) scale(0.97);
+      transform-origin: top center;
+      transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease),
+        visibility 0s linear var(--dur);
+    }
+
+    .cal-dropdown.is-open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      transition: opacity var(--dur) var(--ease), transform var(--dur) var(--spring),
+        visibility 0s;
+    }
+
+    .cal {
+      margin: 0;
+    }
+
+    .cal__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .cal__month {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      text-align: center;
+      flex: 1;
+    }
+
+    .cal__nav {
+      width: 32px;
+      height: 32px;
+      flex: none;
+      display: grid;
+      place-items: center;
+      border: none;
+      border-radius: 50%;
+      background: var(--bg-soft);
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: transform var(--dur) var(--spring), background var(--dur) var(--ease),
+        color var(--dur) var(--ease);
+    }
+
+    .cal__nav:active {
+      transform: scale(0.86);
+    }
+
+    .cal__nav svg {
+      width: 15px;
+      height: 15px;
+      display: block;
+    }
+
+    .cal__weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+
+    .cal__weekdays span {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-faint);
+    }
+
+    .cal__grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+
+    .cal__empty {
+      aspect-ratio: 1 / 1;
+    }
+
+    .cal__day {
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      border: none;
+      border-radius: var(--r-sm);
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      position: relative;
+      transition: background var(--dur) var(--ease), color var(--dur) var(--ease),
+        transform var(--dur) var(--spring);
+    }
+
+    .cal__day:active {
+      transform: scale(0.86);
+    }
+
+    /* Сегодня — акцентный цвет + точка снизу */
+    .cal__day.is-today {
+      color: var(--peach-strong);
+      font-weight: 800;
+    }
+
+    .cal__day.is-today::after {
+      content: "";
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--peach-strong);
+    }
+
+    /* Выбранный день — персиковый градиент */
+    .cal__day.is-selected {
+      background: linear-gradient(135deg, var(--peach-strong), var(--terracotta));
+      color: #fff;
+      font-weight: 800;
+      box-shadow: var(--glow-peach);
+    }
+
+    .cal__day.is-selected::after {
+      display: none;
+    }
+
     .sr-only {
       position: absolute;
       width: 1px;
@@ -1089,10 +1292,14 @@
       <div class="scroll">
         <div class="att-controls">
           <div class="att-controls__row">
-            <label class="date-pill">
-              <span class="date-pill__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
-              <input type="date" id="att-date" aria-label="Дата" />
-            </label>
+            <div class="date-field">
+              <button class="date-pill" type="button" id="att-date-trigger" aria-haspopup="dialog" aria-label="Выбрать дату">
+                <span class="date-pill__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+                <span class="date-pill__value" id="att-date-label">—</span>
+                <span class="date-pill__chevron" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+              </button>
+              <input type="hidden" id="att-date" />
+            </div>
           </div>
 
           <div class="att-controls__row">
@@ -1184,6 +1391,24 @@
       </div>
     </div>
 
+    <!-- Выпадающий календарь (компактный, позиционируется через JS у плашки) -->
+    <div class="cal-backdrop" id="cal-backdrop" aria-hidden="true" data-cal-close></div>
+    <div class="cal-dropdown" id="cal-dropdown" role="dialog" aria-modal="false" aria-hidden="true" aria-label="Выбор даты">
+      <div class="cal__head">
+        <button class="cal__nav" type="button" data-cal-prev aria-label="Предыдущий месяц">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="cal__month" id="cal-month">—</span>
+        <button class="cal__nav" type="button" data-cal-next aria-label="Следующий месяц">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="cal__weekdays" aria-hidden="true">
+        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+      </div>
+      <div class="cal__grid" id="cal-grid"></div>
+    </div>
+
   </div>
   <script>
     (function () {
@@ -1216,17 +1441,34 @@
 
       let currentGroupChildren = [];
 
-      // Текущая дата отметки из календаря (#att-date).
-      // Фолбэк на сегодня — на случай, если инпут пуст.
-      function getAttDate() {
-        const input = document.getElementById("att-date");
-        return (input && input.value) || new Date().toISOString().split("T")[0];
+      // Локальная сегодняшняя дата в формате YYYY-MM-DD
+      // (совпадает с тем, что строит сетка календаря, чтобы не было
+      //  рассинхрона UTC/локаль при подсветке «сегодня»).
+      function todayStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
       }
 
-      // Сброс плашки даты на сегодняшнюю (при входе в группу / смене группы).
+      // Текущая дата отметки из скрытого поля #att-date.
+      // Фолбэк на сегодня — на случай, если значение ещё не задано.
+      function getAttDate() {
+        const input = document.getElementById("att-date");
+        return (input && input.value) || todayStr();
+      }
+
+      // Обновляет подпись плашки даты (#att-date-label) из значения поля.
+      function updateAttDateLabel() {
+        const label = document.getElementById("att-date-label");
+        const v = getAttDate();
+        const parts = v.split("-");
+        if (label) label.textContent = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : v;
+      }
+
+      // Сброс даты на сегодняшнюю (при входе в группу / смене группы).
       function resetAttDateToToday() {
         const input = document.getElementById("att-date");
-        if (input) input.value = new Date().toISOString().split("T")[0];
+        if (input) input.value = todayStr();
+        updateAttDateLabel();
       }
 
       // ==========================================
@@ -1891,14 +2133,152 @@
       // ==========================================
       updateSummary();
 
-      // Смена даты в календаре — перезагружаем список детей текущей группы
-      // с attendance, вычисленным сервером под выбранную дату.
-      const attDateInput = document.getElementById("att-date");
-      if (attDateInput) {
-        attDateInput.addEventListener("change", function () {
-          if (appState.currentGroupId) loadChildren(appState.currentGroupId);
-        });
+      // ==========================================
+      // КАЛЕНДАРЬ (компактный выпадающий, у плашки даты)
+      // Работает и в браузере, и в Telegram MiniApp —
+      // чистый DOM/CSS, без нативного <input type="date">.
+      // Дропдаун позиционируется через JS по координатам
+      // плашки (fixed, вне scroll-контейнера).
+      // ==========================================
+      const MONTHS_RU = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+
+      const calDropdown = document.getElementById("cal-dropdown");
+      const calBackdrop = document.getElementById("cal-backdrop");
+      const calGrid = document.getElementById("cal-grid");
+      const calMonthLabel = document.getElementById("cal-month");
+      const calTrigger = document.getElementById("att-date-trigger");
+      let calView = null; // { year, month } отображаемого месяца, месяц 1-12
+      let calIsOpen = false;
+
+      function renderCal() {
+        if (!calView || !calGrid) return;
+        const year = calView.year;
+        const month = calView.month;
+        if (calMonthLabel) calMonthLabel.textContent = `${MONTHS_RU[month - 1]} ${year}`;
+
+        // Пн = 0
+        const startOffset = (new Date(year, month - 1, 1).getDay() + 6) % 7;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const today = todayStr();
+        const selected = getAttDate();
+
+        let html = "";
+        for (let i = 0; i < startOffset; i++) html += `<span class="cal__empty"></span>`;
+        for (let day = 1; day <= daysInMonth; day++) {
+          const ds = `${year}-${pad2(month)}-${pad2(day)}`;
+          let cls = "cal__day";
+          if (ds === today) cls += " is-today";
+          if (ds === selected) cls += " is-selected";
+          html += `<button type="button" class="${cls}" data-date="${ds}">${day}</button>`;
+        }
+        const total = startOffset + daysInMonth;
+        const trailing = (7 - (total % 7)) % 7;
+        for (let i = 0; i < trailing; i++) html += `<span class="cal__empty"></span>`;
+
+        calGrid.innerHTML = html;
       }
+
+      // Позиционирует дропдаун у плашки даты с учётом границ экрана.
+      function positionCal() {
+        if (!calDropdown || !calTrigger) return;
+        const r = calTrigger.getBoundingClientRect();
+        const dropW = calDropdown.offsetWidth || 280;
+        const gap = 8;
+        const vw = window.innerWidth;
+
+        // По горизонтали: левый край у плашки, но не вылезать за экран.
+        let left = r.left;
+        if (left + dropW > vw - 12) left = Math.max(12, vw - dropW - 12);
+        calDropdown.style.left = left + "px";
+
+        // По вертикали: снизу от плашки; если не влезает — сверху.
+        const spaceBelow = window.innerHeight - r.bottom;
+        calDropdown.style.top = ""; // сброс перед измерением высоты
+        calDropdown.style.top = (r.bottom + gap) + "px";
+        const dropH = calDropdown.offsetHeight || 300;
+        if (spaceBelow < dropH + gap && r.top - gap - dropH > 12) {
+          calDropdown.style.top = (r.top - gap - dropH) + "px";
+        }
+      }
+
+      function openCal() {
+        if (!calDropdown || calIsOpen) return;
+        const parts = getAttDate().split("-").map(Number);
+        calView = { year: parts[0], month: parts[1] };
+        renderCal();
+        calIsOpen = true;
+        if (calBackdrop) {
+          calBackdrop.classList.add("is-open");
+          calBackdrop.setAttribute("aria-hidden", "false");
+        }
+        calDropdown.classList.add("is-open");
+        calDropdown.setAttribute("aria-hidden", "false");
+        // Размеры известны только после показа — позиционируем в следующем кадре.
+        requestAnimationFrame(positionCal);
+      }
+
+      function closeCal() {
+        if (!calDropdown || !calIsOpen) return;
+        calIsOpen = false;
+        if (calBackdrop) {
+          calBackdrop.classList.remove("is-open");
+          calBackdrop.setAttribute("aria-hidden", "true");
+        }
+        calDropdown.classList.remove("is-open");
+        calDropdown.setAttribute("aria-hidden", "true");
+      }
+
+      function pickDate(ds) {
+        if (!ds) return;
+        const input = document.getElementById("att-date");
+        if (input) input.value = ds;
+        updateAttDateLabel();
+        haptic("impact", "light");
+        closeCal();
+        if (appState.currentGroupId) loadChildren(appState.currentGroupId);
+      }
+
+      function calStep(delta) {
+        if (!calView) return;
+        let m = calView.month + delta;
+        let y = calView.year;
+        if (m < 1) { m = 12; y--; }
+        else if (m > 12) { m = 1; y++; }
+        calView = { year: y, month: m };
+        renderCal();
+        positionCal();
+      }
+
+      if (calTrigger) calTrigger.addEventListener("click", function () {
+        haptic("impact", "light");
+        openCal();
+      });
+
+      if (calGrid) calGrid.addEventListener("click", function (e) {
+        const btn = e.target.closest(".cal__day");
+        if (btn) pickDate(btn.dataset.date);
+      });
+
+      document.querySelectorAll("[data-cal-prev]").forEach(function (el) {
+        el.addEventListener("click", function () { haptic("impact", "light"); calStep(-1); });
+      });
+      document.querySelectorAll("[data-cal-next]").forEach(function (el) {
+        el.addEventListener("click", function () { haptic("impact", "light"); calStep(1); });
+      });
+      document.querySelectorAll("[data-cal-close]").forEach(function (el) {
+        el.addEventListener("click", closeCal);
+      });
+
+      // Скролл списка детей / ресайз — закрываем дропдаун (он не следит за плашкой).
+      document.addEventListener("scroll", function () { if (calIsOpen) closeCal(); }, true);
+      window.addEventListener("resize", function () { if (calIsOpen) closeCal(); });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && calIsOpen) closeCal();
+      });
+
+      // Первичная подпись даты на плашке
+      updateAttDateLabel();
 
       if (window.Telegram && window.Telegram.WebApp) {
         try {
